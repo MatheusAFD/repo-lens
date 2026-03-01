@@ -8,15 +8,15 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root.tsx'
-import { Route as AuthedRouteImport } from './routes/_authed.tsx'
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up.tsx'
-import { Route as AuthSignInRouteImport } from './routes/auth/sign-in.tsx'
-import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard.tsx'
-import { Route as AuthedAnalyzeRepoIdRouteImport } from './routes/_authed/analyze/$repoId.tsx'
+import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
+import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedAnalyzeRepoIdRouteImport } from './routes/_authed/analyze/$repoId'
 import { Route as AuthedReposRepoIdAnalysesIndexRouteImport } from './routes/_authed/repos/$repoId/analyses/index'
-import { Route as AuthedReposRepoIdAnalysesAnalysisIdRouteImport } from './routes/_authed/repos/$repoId/analyses/$analysisId.tsx'
+import { Route as AuthedReposRepoIdAnalysesAnalysisIdRouteImport } from './routes/_authed/repos/$repoId/analyses/$analysisId'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
