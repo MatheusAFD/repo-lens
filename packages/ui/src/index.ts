@@ -1,4 +1,3 @@
-// Components
 export { Button, buttonVariants } from './components/button'
 export { Input } from './components/input'
 export { Label } from './components/label'
@@ -54,5 +53,32 @@ export {
   TableCaption,
 } from './components/table'
 
-// Lib
 export { cn } from './lib/utils'
+export {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from './components/accordion'
+export { Collapsible, CollapsibleTrigger, CollapsibleContent } from './components/collapsible'
+export { Progress } from './components/progress'
+export { Avatar, AvatarImage, AvatarFallback } from './components/avatar'
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuGroup,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuCheckboxItem,
+} from './components/dropdown-menu'
+export { Skeleton } from './components/skeleton'
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './components/tabs'
+export { Toaster } from './components/sonner'

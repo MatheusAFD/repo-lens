@@ -14,6 +14,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedAnalyzeRepoIdRouteImport } from './routes/_authed/analyze/$repoId'
+import { Route as AuthedReposRepoIdAnalysesIndexRouteImport } from './routes/_authed/repos/$repoId/analyses/index'
+import { Route as AuthedReposRepoIdAnalysesAnalysisIdRouteImport } from './routes/_authed/repos/$repoId/analyses/$analysisId'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -39,18 +42,41 @@ const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedAnalyzeRepoIdRoute = AuthedAnalyzeRepoIdRouteImport.update({
+  id: '/analyze/$repoId',
+  path: '/analyze/$repoId',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedReposRepoIdAnalysesIndexRoute =
+  AuthedReposRepoIdAnalysesIndexRouteImport.update({
+    id: '/repos/$repoId/analyses/',
+    path: '/repos/$repoId/analyses/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedReposRepoIdAnalysesAnalysisIdRoute =
+  AuthedReposRepoIdAnalysesAnalysisIdRouteImport.update({
+    id: '/repos/$repoId/analyses/$analysisId',
+    path: '/repos/$repoId/analyses/$analysisId',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/analyze/$repoId': typeof AuthedAnalyzeRepoIdRoute
+  '/repos/$repoId/analyses/$analysisId': typeof AuthedReposRepoIdAnalysesAnalysisIdRoute
+  '/repos/$repoId/analyses/': typeof AuthedReposRepoIdAnalysesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/analyze/$repoId': typeof AuthedAnalyzeRepoIdRoute
+  '/repos/$repoId/analyses/$analysisId': typeof AuthedReposRepoIdAnalysesAnalysisIdRoute
+  '/repos/$repoId/analyses': typeof AuthedReposRepoIdAnalysesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +85,29 @@ export interface FileRoutesById {
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/_authed/analyze/$repoId': typeof AuthedAnalyzeRepoIdRoute
+  '/_authed/repos/$repoId/analyses/$analysisId': typeof AuthedReposRepoIdAnalysesAnalysisIdRoute
+  '/_authed/repos/$repoId/analyses/': typeof AuthedReposRepoIdAnalysesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/auth/sign-in' | '/auth/sign-up'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
+    | '/analyze/$repoId'
+    | '/repos/$repoId/analyses/$analysisId'
+    | '/repos/$repoId/analyses/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/auth/sign-in' | '/auth/sign-up'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
+    | '/analyze/$repoId'
+    | '/repos/$repoId/analyses/$analysisId'
+    | '/repos/$repoId/analyses'
   id:
     | '__root__'
     | '/'
@@ -72,6 +115,9 @@ export interface FileRouteTypes {
     | '/_authed/dashboard'
     | '/auth/sign-in'
     | '/auth/sign-up'
+    | '/_authed/analyze/$repoId'
+    | '/_authed/repos/$repoId/analyses/$analysisId'
+    | '/_authed/repos/$repoId/analyses/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,15 +164,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/analyze/$repoId': {
+      id: '/_authed/analyze/$repoId'
+      path: '/analyze/$repoId'
+      fullPath: '/analyze/$repoId'
+      preLoaderRoute: typeof AuthedAnalyzeRepoIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/repos/$repoId/analyses/': {
+      id: '/_authed/repos/$repoId/analyses/'
+      path: '/repos/$repoId/analyses'
+      fullPath: '/repos/$repoId/analyses/'
+      preLoaderRoute: typeof AuthedReposRepoIdAnalysesIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/repos/$repoId/analyses/$analysisId': {
+      id: '/_authed/repos/$repoId/analyses/$analysisId'
+      path: '/repos/$repoId/analyses/$analysisId'
+      fullPath: '/repos/$repoId/analyses/$analysisId'
+      preLoaderRoute: typeof AuthedReposRepoIdAnalysesAnalysisIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedAnalyzeRepoIdRoute: typeof AuthedAnalyzeRepoIdRoute
+  AuthedReposRepoIdAnalysesAnalysisIdRoute: typeof AuthedReposRepoIdAnalysesAnalysisIdRoute
+  AuthedReposRepoIdAnalysesIndexRoute: typeof AuthedReposRepoIdAnalysesIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedAnalyzeRepoIdRoute: AuthedAnalyzeRepoIdRoute,
+  AuthedReposRepoIdAnalysesAnalysisIdRoute:
+    AuthedReposRepoIdAnalysesAnalysisIdRoute,
+  AuthedReposRepoIdAnalysesIndexRoute: AuthedReposRepoIdAnalysesIndexRoute,
 }
 
 const AuthedRouteWithChildren =

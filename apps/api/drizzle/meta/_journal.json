@@ -22,6 +22,13 @@
       "when": 1771076600000,
       "tag": "0002_fill_default_role",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1772307260168,
+      "tag": "0003_foamy_lucky_pierre",
+      "breakpoints": true
     }
   ]
 }

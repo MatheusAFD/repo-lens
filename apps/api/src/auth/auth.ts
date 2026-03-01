@@ -6,7 +6,7 @@ import * as schema from '../config/database/schema'
 import { ac, portalRole, backofficeRole } from './permissions'
 
 export const auth = betterAuth({
-  appName: 'Mono Repo Auth',
+  appName: 'RepoLens',
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,
@@ -18,11 +18,18 @@ export const auth = betterAuth({
   session: {
     cookieCache: {
       enabled: true,
-      maxAge: 5 * 60, // 5 minutes
+      maxAge: 5 * 60,
     },
   },
   emailAndPassword: {
     enabled: true,
+  },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      scope: ['read:user', 'public_repo'],
+    },
   },
   plugins: [
     admin({

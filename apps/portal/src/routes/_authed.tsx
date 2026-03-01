@@ -1,5 +1,5 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { authMiddleware } from '@/middleware/auth'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authed')({
   component: AuthedLayout,

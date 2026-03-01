@@ -171,6 +171,31 @@ import { ok, err, isErr } from '@repo/shared'
 - **Named exports** everywhere (except TanStack routes that require default)
 - Props interface: `{ComponentName}Props`
 
+### No Comments in Code
+
+- **Never add comments to code** — no inline comments (`//`), block comments (`/* */`), JSDoc (`/** */`), or JSX comments (`{/* */}`)
+- Code must be self-documenting through clear naming and structure
+- The only allowed exceptions are `biome-ignore` directives when a lint rule must be suppressed and there is no alternative
+
+### Semantic Boolean Variables
+
+- **Always extract complex boolean conditions into a named `const`** before using them in JSX or logic
+- The name must express intent, not mechanics
+
+```tsx
+// ❌ Hard to read inline
+{!isLoading && repos && repos.length > 0 && <RepoList />}
+
+// ✅ Extract to semantic const
+const hasRepos = !isLoading && !!repos && repos.length > 0
+{hasRepos && <RepoList />}
+
+// More examples
+const showEmpty = !isLoading && !hasData
+const hasError = !!error || (!isLoading && !data)
+const canSubmit = isValid && !isSubmitting
+```
+
 ### Import Aliases
 
 ```ts

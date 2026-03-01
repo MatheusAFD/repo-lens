@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm'
-import { pgTable, text, timestamp, boolean, index } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, index, integer } from 'drizzle-orm/pg-core'
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -10,7 +10,7 @@ export const user = pgTable('user', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
   role: text('role'),
   banned: boolean('banned').default(false),
@@ -26,7 +26,7 @@ export const session = pgTable(
     token: text('token').notNull().unique(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(() => new Date())
       .notNull(),
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),
@@ -56,7 +56,7 @@ export const account = pgTable(
     password: text('password'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [index('account_userId_idx').on(table.userId)],
@@ -72,7 +72,7 @@ export const verification = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
       .defaultNow()
-      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [index('verification_identifier_idx').on(table.identifier)],
@@ -81,6 +81,7 @@ export const verification = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  repositories: many(repository),
 }))
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -95,4 +96,65 @@ export const accountRelations = relations(account, ({ one }) => ({
     fields: [account.userId],
     references: [user.id],
   }),
+}))
+
+export const repository = pgTable(
+  'repository',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    githubRepoId: text('github_repo_id').notNull(),
+    owner: text('owner').notNull(),
+    name: text('name').notNull(),
+    fullName: text('full_name').notNull(),
+    description: text('description'),
+    language: text('language'),
+    isPrivate: boolean('is_private').default(false).notNull(),
+    htmlUrl: text('html_url').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('repository_userId_idx').on(table.userId),
+    index('repository_fullName_idx').on(table.fullName),
+  ],
+)
+
+export const analysis = pgTable(
+  'analysis',
+  {
+    id: text('id').primaryKey(),
+    repositoryId: text('repository_id')
+      .notNull()
+      .references(() => repository.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    status: text('status').notNull().default('running'),
+    result: text('result'),
+    errorMessage: text('error_message'),
+    inputTokens: integer('input_tokens'),
+    outputTokens: integer('output_tokens'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    completedAt: timestamp('completed_at'),
+  },
+  (table) => [
+    index('analysis_repositoryId_idx').on(table.repositoryId),
+    index('analysis_userId_idx').on(table.userId),
+  ],
+)
+
+export const repositoryRelations = relations(repository, ({ one, many }) => ({
+  user: one(user, { fields: [repository.userId], references: [user.id] }),
+  analyses: many(analysis),
+}))
+
+export const analysisRelations = relations(analysis, ({ one }) => ({
+  repository: one(repository, { fields: [analysis.repositoryId], references: [repository.id] }),
+  user: one(user, { fields: [analysis.userId], references: [user.id] }),
 }))

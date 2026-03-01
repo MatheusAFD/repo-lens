@@ -1,6 +1,6 @@
 {
-  "short_name": "TanStack App",
-  "name": "Create TanStack App Sample",
+  "short_name": "RepoLens",
+  "name": "RepoLens — AI Repository Analyzer",
   "icons": [
     {
       "src": "favicon.ico",

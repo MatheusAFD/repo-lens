@@ -1,6 +1,6 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
 import { authClient } from '@/lib/auth-client'
 import { SignInForm } from '@/modules/auth/components/login-form'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/auth/sign-in')({
   beforeLoad: async () => {
