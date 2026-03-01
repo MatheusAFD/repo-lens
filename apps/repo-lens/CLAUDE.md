@@ -1,4 +1,4 @@
-# CLAUDE.md — apps/portal
+# CLAUDE.md — apps/repo-lens
 
 > End-user portal. TanStack Start v1, React 19, port 3000.
 

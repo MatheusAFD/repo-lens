@@ -18,7 +18,7 @@ Paste a GitHub repo URL or connect your GitHub account to select from your repos
 
 | App / Package | Tech |
 |---|---|
-| **Portal** (`apps/portal`) | TanStack Start, React 19, TanStack Query |
+| **RepoLens** (`apps/repo-lens`) | TanStack Start, React 19, TanStack Query |
 | **API** (`apps/api`) | NestJS 11, Drizzle ORM, PostgreSQL |
 | **UI** (`packages/ui`) | Shadcn/UI + Radix UI, Tailwind CSS v4 |
 | **Auth** (`packages/auth`) | Better Auth (GitHub OAuth) |
@@ -37,7 +37,7 @@ cd apps/api && docker-compose up -d && cd ../..
 
 # 3. Set up environment variables
 cp apps/api/.env.example apps/api/.env
-cp apps/portal/.env.example apps/portal/.env
+cp apps/repo-lens/.env.example apps/repo-lens/.env
 # Fill in: ANTHROPIC_API_KEY, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET
 
 # 4. Run database migrations
@@ -72,7 +72,7 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 ```
 
-### `apps/portal/.env`
+### `apps/repo-lens/.env`
 
 ```env
 VITE_API_URL=http://localhost:4000

@@ -17,7 +17,7 @@ export default defineConfig({
       name: 'API',
     },
     {
-      command: 'pnpm --filter @repo/portal dev',
+      command: 'pnpm --filter @repo/repo-lens dev',
       url: 'http://localhost:3000',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
