@@ -37,7 +37,7 @@ mono-repo-auth/
 
 | Project | Technology | Port |
 |---|---|---|
-| `apps/repo-lens` | TanStack Start v1, React 19, TanStack Query, Better Auth client | 3000 |
+| `apps/portal` | TanStack Start v1, React 19, TanStack Query, Better Auth client | 3000 |
 | `apps/backoffice` | TanStack Start v1, React 19, TanStack Query, Better Auth client | 3001 |
 | `apps/api` | NestJS v11, Express, Drizzle ORM, Better Auth, PostgreSQL | 4000 |
 | `packages/ui` | Vite, React 19, Shadcn/UI (styling), Radix UI | — |
@@ -56,7 +56,7 @@ pnpm install
 pnpm dev
 
 # Development for a specific project
-pnpm --filter @repo/repo-lens dev
+pnpm --filter @repo/portal dev
 pnpm --filter @repo/backoffice dev
 pnpm --filter @repo/api dev
 
@@ -91,7 +91,7 @@ pnpm test:e2e:ui               # Interactive mode (UI Mode)
 
 **IMPORTANT:** Each project has its own `.env.example`. Never commit `.env`.
 
-### `apps/repo-lens/.env`
+### `apps/portal/.env`
 ```env
 VITE_API_URL=http://localhost:4000
 ```

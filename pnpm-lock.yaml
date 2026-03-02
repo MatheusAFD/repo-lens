@@ -121,7 +121,7 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
-  apps/repo-lens:
+  apps/portal:
     dependencies:
       '@hookform/resolvers':
         specifier: ^5.2.2
