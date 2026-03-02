@@ -8,9 +8,16 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
 
+  globalSetup: './e2e/global-setup.ts',
+  globalTeardown: './e2e/global-teardown.ts',
+
+  use: {
+    trace: 'on-first-retry',
+  },
+
   webServer: [
     {
-      command: 'pnpm --filter @repo/api dev',
+      command: 'pnpm --filter @repo/api dev:test',
       url: 'http://localhost:4000/api/auth/ok',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
@@ -23,22 +30,25 @@ export default defineConfig({
       timeout: 120_000,
       name: 'Portal',
     },
-    {
-      command: 'pnpm --filter @repo/backoffice dev',
-      url: 'http://localhost:3001',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-      name: 'Backoffice',
-    },
   ],
 
   projects: [
     {
-      name: 'portal',
-      testDir: './e2e/portal',
+      name: 'portal-setup',
+      testMatch: /portal\/setup\.ts/,
       use: {
         baseURL: 'http://localhost:3000',
         ...devices['Desktop Chrome'],
+      },
+    },
+    {
+      name: 'portal',
+      testDir: './e2e/portal',
+      dependencies: ['portal-setup'],
+      use: {
+        baseURL: 'http://localhost:3000',
+        ...devices['Desktop Chrome'],
+        storageState: 'e2e/.auth/user.json',
       },
     },
     {

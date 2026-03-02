@@ -17,7 +17,7 @@ export class AnalysisController {
   streamAnalysis(
     @Param('id') id: string,
     @Session() session: UserSession,
-  ): Observable<MessageEvent> {
+  ): Promise<Observable<MessageEvent>> {
     return this.analysisService.streamAnalysis(id, session.user.id)
   }
 

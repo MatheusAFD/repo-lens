@@ -181,10 +181,14 @@ function TabSkeletonPlaceholder() {
 }
 
 export function AnalysisPage({ repo, initialAnalysisId }: AnalysisPageProps) {
-  const [streamingId, setStreamingId] = useState<string | null>(null)
+  const [streamingId, setStreamingId] = useState<string | null>(initialAnalysisId)
   const [isStarting, setIsStarting] = useState(false)
   const { mutateAsync: startAnalysis } = useStartAnalysis(repo.id)
-  const { data: saved, isLoading: savedLoading } = useAnalysis(initialAnalysisId)
+  const {
+    data: saved,
+    isLoading: savedLoading,
+    refetch: refetchSaved,
+  } = useAnalysis(initialAnalysisId)
 
   const { sections: streamSections, currentSection, isDone, error } = useAnalysisStream(streamingId)
 
@@ -194,12 +198,19 @@ export function AnalysisPage({ repo, initialAnalysisId }: AnalysisPageProps) {
   const isStreaming = !!streamingId && !isDone && !error
   const hasStarted = !!streamingId
 
-  const displaySections: Partial<AnalysisResult> = hasStarted
+  const streamHasData = Object.keys(streamSections).length > 0
+  const displaySections: Partial<AnalysisResult> = streamHasData
     ? streamSections
     : (saved?.result ?? {})
   const securityGrade = displaySections.security?.grade
 
   const allSectionsComplete = isDone && SECTION_ORDER.every((s) => s in streamSections)
+
+  useEffect(() => {
+    if (isDone && !streamHasData) {
+      refetchSaved()
+    }
+  }, [isDone, streamHasData, refetchSaved])
 
   useEffect(() => {
     if (allSectionsComplete) {
@@ -222,8 +233,9 @@ export function AnalysisPage({ repo, initialAnalysisId }: AnalysisPageProps) {
   }
 
   const hasSaved = !!saved?.result && Object.keys(saved.result).length > 0
-  const showLoading = savedLoading && !hasStarted
-  const showSections = !savedLoading || hasStarted
+  const showReanalyzeButton = (isDone || !!error || (!isStreaming && hasSaved)) && !isStarting
+  const showLoading = savedLoading && !streamHasData
+  const showSections = !savedLoading || streamHasData
 
   return (
     <div className="min-h-screen bg-background">
@@ -269,24 +281,15 @@ export function AnalysisPage({ repo, initialAnalysisId }: AnalysisPageProps) {
               <p className="text-sm text-muted-foreground mt-0.5">{repo.owner}</p>
             </div>
             <div className="flex gap-2 shrink-0">
-              {!hasStarted && (
+              {showReanalyzeButton && (
                 <Button
                   size="sm"
+                  variant={isDone ? 'outline' : 'default'}
                   onClick={handleReanalyze}
                   disabled={isStarting || savedLoading}
                   className="h-8 text-xs cursor-pointer"
                 >
                   {isStarting ? 'Starting...' : 'Re-analyze'}
-                </Button>
-              )}
-              {isDone && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleReanalyze}
-                  className="h-8 text-xs cursor-pointer"
-                >
-                  Re-analyze
                 </Button>
               )}
             </div>

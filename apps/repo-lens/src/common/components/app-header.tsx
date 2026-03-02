@@ -53,6 +53,7 @@ export function AppHeader() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
+                data-testid="user-menu-trigger"
                 className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
               >
                 <Avatar className="h-7 w-7">

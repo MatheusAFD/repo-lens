@@ -19,12 +19,12 @@ interface AddRepoDialogProps {
 }
 
 export function AddRepoDialog({ open, onOpenChange, onAdded }: AddRepoDialogProps) {
-  const { data: githubRepos, isLoading } = useGithubRepos()
+  const { data: githubRepos, isLoading } = useGithubRepos(open)
   const { mutateAsync: addRepo, isPending } = useAddRepository()
   const [adding, setAdding] = useState<number | null>(null)
 
-  const showEmpty = !isLoading && !githubRepos?.length
-  const showList = !isLoading && !!githubRepos?.length
+  const showEmpty = open && !isLoading && !githubRepos?.length
+  const showList = open && !isLoading && !!githubRepos?.length
 
   async function handleAdd(repo: GithubRepo) {
     setAdding(repo.id)

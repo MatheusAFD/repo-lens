@@ -6,8 +6,8 @@ export function useRepositories() {
   return useQuery({ queryKey: ['repos'], queryFn: fetchRepos })
 }
 
-export function useGithubRepos() {
-  return useQuery({ queryKey: ['github-repos'], queryFn: fetchGithubRepos })
+export function useGithubRepos(enabled = true) {
+  return useQuery({ queryKey: ['github-repos'], queryFn: fetchGithubRepos, enabled })
 }
 
 export function useRepository(id: string) {

@@ -5,10 +5,14 @@ import { eq, and, desc } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { db } from '../../config/database'
 import { analysis, type repository } from '../../config/database/schema'
-import type { GithubService } from '../github/github.service'
-import type { ReposService } from '../repos/repos.service'
-import type { ContextBuilderService } from './context-builder.service'
-import type { PromptBuilderService } from './prompt-builder.service'
+// biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
+import { GithubService } from '../github/github.service'
+// biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
+import { ReposService } from '../repos/repos.service'
+// biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
+import { ContextBuilderService } from './context-builder.service'
+// biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
+import { PromptBuilderService } from './prompt-builder.service'
 import type { AnalysisResult, AnalysisSectionType, SseEvent } from '@repo/shared'
 
 const MAX_ANALYSES_PER_HOUR = 3
@@ -43,6 +47,8 @@ export class AnalysisService {
       status: 'running',
     })
 
+    this.subjects.set(analysisId, new Subject<MessageEvent>())
+
     this.runAnalysis(analysisId, repo, userId).catch(async (runError) => {
       await db
         .update(analysis)
@@ -64,7 +70,45 @@ export class AnalysisService {
     return { analysisId }
   }
 
-  streamAnalysis(analysisId: string, _userId: string): Observable<MessageEvent> {
+  async streamAnalysis(analysisId: string, userId: string): Promise<Observable<MessageEvent>> {
+    const existing = this.subjects.get(analysisId)
+    if (existing) return existing.asObservable()
+
+    const [row] = await db
+      .select()
+      .from(analysis)
+      .where(and(eq(analysis.id, analysisId), eq(analysis.userId, userId)))
+
+    if (row?.status === 'completed' || row?.status === 'failed') {
+      const subject = new Subject<MessageEvent>()
+      setTimeout(() => {
+        if (row.status === 'completed' && row.result) {
+          try {
+            const result = JSON.parse(row.result) as Partial<AnalysisResult>
+            for (const [name, data] of Object.entries(result)) {
+              const sectionEvent: SseEvent = {
+                type: 'section',
+                name: name as AnalysisSectionType,
+                data,
+              }
+              subject.next(
+                new MessageEvent('message', {
+                  data: JSON.stringify(sectionEvent),
+                }),
+              )
+            }
+          } catch {}
+        }
+        const finalEvent: SseEvent =
+          row.status === 'completed'
+            ? { type: 'done', analysisId }
+            : { type: 'error', message: row.errorMessage ?? 'Analysis failed' }
+        subject.next(new MessageEvent('message', { data: JSON.stringify(finalEvent) }))
+        subject.complete()
+      }, 0)
+      return subject.asObservable()
+    }
+
     const subject = new Subject<MessageEvent>()
     this.subjects.set(analysisId, subject)
     return subject.asObservable()
@@ -105,29 +149,36 @@ export class AnalysisService {
     userId: string,
   ) {
     this.results.set(analysisId, {})
-    this.emit(analysisId, {
-      type: 'progress',
-      message: 'Fetching repository structure…',
-    })
 
-    const token = await this.githubService.getToken(userId)
-    if (!token) throw new Error('GitHub account not connected')
+    const isMockMode = process.env.ANTHROPIC_MOCK === 'true'
 
-    const [treeErr, tree] = await this.githubService.getRepoTree(repo.owner, repo.name, token)
-    if (treeErr || !tree) throw treeErr ?? new Error('Could not fetch repository tree')
+    let files: Awaited<ReturnType<ContextBuilderService['buildContext']>> = []
 
-    this.emit(analysisId, {
-      type: 'progress',
-      message: 'Selecting relevant files…',
-    })
+    if (!isMockMode) {
+      this.emit(analysisId, {
+        type: 'progress',
+        message: 'Fetching repository structure…',
+      })
 
-    const files = await this.contextBuilder.buildContext(
-      repo.owner,
-      repo.name,
-      tree,
-      this.githubService,
-      token,
-    )
+      const token = await this.githubService.getToken(userId)
+      if (!token) throw new Error('GitHub account not connected')
+
+      const [treeErr, tree] = await this.githubService.getRepoTree(repo.owner, repo.name, token)
+      if (treeErr || !tree) throw treeErr ?? new Error('Could not fetch repository tree')
+
+      this.emit(analysisId, {
+        type: 'progress',
+        message: 'Selecting relevant files…',
+      })
+
+      files = await this.contextBuilder.buildContext(
+        repo.owner,
+        repo.name,
+        tree,
+        this.githubService,
+        token,
+      )
+    }
 
     this.emit(analysisId, {
       type: 'progress',
@@ -148,13 +199,15 @@ export class AnalysisService {
     let buffer = ''
     let inputTokens = 0
     let outputTokens = 0
-
-    const stream = await this.anthropic.messages.stream({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
-    })
+    const stream = isMockMode
+      ? // biome-ignore lint/suspicious/noExplicitAny: dynamic require used only in test mode
+        (require('./__mocks__/anthropic-stream.fixture') as any).createMockAnthropicStream()
+      : this.anthropic.messages.stream({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+        })
 
     for await (const chunk of stream) {
       if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
@@ -226,6 +279,8 @@ export class AnalysisService {
   }
 
   private enforceRateLimit(userId: string) {
+    if (process.env.NODE_ENV !== 'production') return
+
     const now = Date.now()
     const hourAgo = now - 60 * 60 * 1000
     const timestamps = (rateLimitMap.get(userId) ?? []).filter((timestamp) => timestamp > hourAgo)

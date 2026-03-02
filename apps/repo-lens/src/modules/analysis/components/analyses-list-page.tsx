@@ -37,9 +37,11 @@ export function AnalysesListPage({ repo }: AnalysesListPageProps) {
   const { data: analyses, isLoading } = useRepoAnalyses(repo.id)
   const { mutateAsync: startAnalysis } = useStartAnalysis(repo.id)
   const [isStarting, setIsStarting] = useState(false)
+  const [startError, setStartError] = useState<string | null>(null)
 
   async function handleNewAnalysis() {
     setIsStarting(true)
+    setStartError(null)
     try {
       const { analysisId } = await startAnalysis()
       navigate({
@@ -47,7 +49,7 @@ export function AnalysesListPage({ repo }: AnalysesListPageProps) {
         params: { repoId: repo.id, analysisId } as never,
       })
     } catch (err) {
-      console.error(err)
+      setStartError(err instanceof Error ? err.message : 'Failed to start analysis')
     } finally {
       setIsStarting(false)
     }
@@ -93,6 +95,12 @@ export function AnalysesListPage({ repo }: AnalysesListPageProps) {
             {[1, 2, 3].map((k) => (
               <Skeleton key={k} className="h-16 rounded-xl" />
             ))}
+          </div>
+        )}
+
+        {startError && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400">
+            {startError}
           </div>
         )}
 

@@ -53,7 +53,11 @@ export function RepoCard({ repo }: RepoCardProps) {
     : undefined
 
   return (
-    <Card className="group border-border/60 hover:border-border transition-all duration-200 hover:shadow-sm bg-card">
+    <Card
+      data-testid="repo-card"
+      data-repo-name={repo.name}
+      className="group border-border/60 hover:border-border transition-all duration-200 hover:shadow-sm bg-card"
+    >
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
