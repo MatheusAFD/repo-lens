@@ -12,6 +12,7 @@ interface SectionCardProps {
   title: string
   description: string
   children: React.ReactNode
+  data?: unknown
   isStreaming?: boolean
   className?: string
 }
@@ -21,19 +22,19 @@ export function SectionCard({
   title,
   description,
   children,
+  data,
   isStreaming,
   className,
 }: SectionCardProps) {
   const [open, setOpen] = useState(true)
 
   function handleCopy() {
-    const el = document.getElementById(`section-${title}`)
-    if (el) {
-      navigator.clipboard
-        .writeText(el.innerText)
-        .then(() => toast.success('Copied to clipboard'))
-        .catch(() => {})
-    }
+    const text = data ? JSON.stringify(data, null, 2) : ''
+    if (!text) return
+    navigator.clipboard
+      .writeText(text)
+      .then(() => toast.success('Copied to clipboard'))
+      .catch(() => {})
   }
 
   return (
@@ -76,9 +77,7 @@ export function SectionCard({
 
         <CollapsibleContent>
           <div className="border-t border-border/40">
-            <div id={`section-${title}`} className="px-5 py-4">
-              {children}
-            </div>
+            <div className="px-5 py-4">{children}</div>
             <div className="px-5 pb-3 flex justify-end">
               <button
                 type="button"

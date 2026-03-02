@@ -15,6 +15,7 @@ export function ExecutiveSummarySectionView({ data, isStreaming }: ExecutiveSumm
       icon={SECTION_ICONS.executive_summary}
       title={meta.label}
       description={meta.description}
+      data={data}
       isStreaming={isStreaming}
     >
       <div className="space-y-4">

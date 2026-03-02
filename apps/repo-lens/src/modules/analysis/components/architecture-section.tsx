@@ -16,6 +16,7 @@ export function ArchitectureSection({ data, isStreaming }: ArchitectureSectionPr
       icon={SECTION_ICONS.architecture}
       title={meta.label}
       description={meta.description}
+      data={data}
       isStreaming={isStreaming}
     >
       <div className="space-y-4">

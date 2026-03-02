@@ -17,6 +17,7 @@ export function DependenciesSection({ data, isStreaming }: DependenciesSectionPr
       icon={SECTION_ICONS.dependencies}
       title={meta.label}
       description={meta.description}
+      data={data}
       isStreaming={isStreaming}
     >
       <div className="space-y-5">

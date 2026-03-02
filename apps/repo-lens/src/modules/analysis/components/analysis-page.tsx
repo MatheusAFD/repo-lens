@@ -183,6 +183,7 @@ function TabSkeletonPlaceholder() {
 export function AnalysisPage({ repo, initialAnalysisId }: AnalysisPageProps) {
   const [streamingId, setStreamingId] = useState<string | null>(initialAnalysisId)
   const [isStarting, setIsStarting] = useState(false)
+  const startedInSessionRef = useRef(false)
   const { mutateAsync: startAnalysis } = useStartAnalysis(repo.id)
   const {
     data: saved,
@@ -213,7 +214,7 @@ export function AnalysisPage({ repo, initialAnalysisId }: AnalysisPageProps) {
   }, [isDone, streamHasData, refetchSaved])
 
   useEffect(() => {
-    if (allSectionsComplete) {
+    if (allSectionsComplete && startedInSessionRef.current) {
       toast.success('Analysis complete', {
         description: 'All sections have been analyzed successfully.',
       })
@@ -224,6 +225,7 @@ export function AnalysisPage({ repo, initialAnalysisId }: AnalysisPageProps) {
     setIsStarting(true)
     try {
       const { analysisId } = await startAnalysis()
+      startedInSessionRef.current = true
       setStreamingId(analysisId)
     } catch (startError) {
       console.error(startError)

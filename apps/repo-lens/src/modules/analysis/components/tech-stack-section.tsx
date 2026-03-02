@@ -23,6 +23,7 @@ export function TechStackSection({ data, isStreaming }: TechStackSectionProps) {
       icon={SECTION_ICONS.tech_stack}
       title={meta.label}
       description={meta.description}
+      data={data}
       isStreaming={isStreaming}
     >
       <div className="space-y-4">

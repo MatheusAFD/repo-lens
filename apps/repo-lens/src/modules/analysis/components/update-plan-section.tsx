@@ -70,6 +70,7 @@ export function UpdatePlanSection({ data, isStreaming }: UpdatePlanSectionProps)
       icon={SECTION_ICONS.update_plan}
       title={meta.label}
       description={meta.description}
+      data={data}
       isStreaming={isStreaming}
     >
       <Accordion

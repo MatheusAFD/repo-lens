@@ -32,6 +32,7 @@ export function RecommendationsSection({ data, isStreaming }: RecommendationsSec
       icon={SECTION_ICONS.recommendations}
       title={meta.label}
       description={meta.description}
+      data={data}
       isStreaming={isStreaming}
     >
       <div className="space-y-2">

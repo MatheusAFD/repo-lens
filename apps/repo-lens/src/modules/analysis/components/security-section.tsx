@@ -25,6 +25,7 @@ export function SecuritySection({ data, isStreaming }: SecuritySectionProps) {
       icon={SECTION_ICONS.security}
       title={meta.label}
       description={meta.description}
+      data={data}
       isStreaming={isStreaming}
     >
       <div className="space-y-5">
