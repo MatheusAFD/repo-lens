@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext } from '@playwright/test'
+import { TEST_USER } from './fixtures'
 
 const API_URL = 'http://localhost:4001'
 
@@ -8,6 +9,24 @@ export interface SeededRepository {
   owner: string
   name: string
   fullName: string
+}
+
+async function getApiSessionCookie(request: APIRequestContext): Promise<string> {
+  const response = await request.post(`${API_URL}/api/auth/sign-in/email`, {
+    data: { email: TEST_USER.email, password: TEST_USER.password },
+  })
+
+  const setCookieHeader = response.headers()['set-cookie'] ?? ''
+  const sessionCookie = setCookieHeader
+    .split(',')
+    .map((c) => c.trim())
+    .find((c) => c.startsWith('better-auth.session_token='))
+
+  if (!sessionCookie) {
+    throw new Error('Failed to obtain session cookie for seed requests')
+  }
+
+  return sessionCookie.split(';')[0]
 }
 
 export async function seedRepository(
@@ -23,6 +42,8 @@ export async function seedRepository(
     htmlUrl: string
   }> = {},
 ): Promise<SeededRepository> {
+  const sessionCookie = await getApiSessionCookie(request)
+
   const payload = {
     githubRepoId: overrides.githubRepoId ?? randomUUID(),
     owner: overrides.owner ?? 'test-owner',
@@ -36,6 +57,7 @@ export async function seedRepository(
 
   const response = await request.post(`${API_URL}/repos`, {
     data: payload,
+    headers: { Cookie: sessionCookie },
   })
 
   return response.json()

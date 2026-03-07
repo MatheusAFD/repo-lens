@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Sse } from '@nestjs/common'
+import { Throttle } from '@nestjs/throttler'
 import type { Observable } from 'rxjs'
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth'
 import type { AskQuestionRequest, StartAnalysisRequest } from '@repo/shared'
@@ -9,6 +10,7 @@ import { AnalysisService } from './analysis.service'
 export class AnalysisController {
   constructor(private readonly analysisService: AnalysisService) {}
 
+  @Throttle({ analysis: { ttl: 60_000, limit: 5 } })
   @Post(':repoId/start')
   startAnalysis(
     @Param('repoId') repoId: string,
@@ -46,6 +48,7 @@ export class AnalysisController {
     return this.analysisService.getQuestions(id, session.user.id)
   }
 
+  @Throttle({ analysis: { ttl: 60_000, limit: 5 } })
   @Post(':id/ask')
   @Sse()
   askQuestion(

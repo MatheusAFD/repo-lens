@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { AppModule } from './app.module'
@@ -15,19 +16,23 @@ async function bootstrap() {
     credentials: true,
   })
 
-  const config = new DocumentBuilder()
-    .setTitle('API')
-    .setDescription('Backend API')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build()
+  const isDevelopment = process.env.NODE_ENV !== 'production'
 
-  const document = SwaggerModule.createDocument(app, config)
-  SwaggerModule.setup('docs', app, document)
+  if (isDevelopment) {
+    const config = new DocumentBuilder()
+      .setTitle('API')
+      .setDescription('Backend API')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build()
+
+    const document = SwaggerModule.createDocument(app, config)
+    SwaggerModule.setup('docs', app, document)
+  }
 
   const port = Number(process.env.PORT ?? 4000)
   await app.listen(port)
-  console.log(`Application running on http://localhost:${port}`)
+  Logger.log(`Application running on port ${port}`, 'Bootstrap')
 }
 
 bootstrap()
