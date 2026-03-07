@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const authFile = path.join(__dirname, '../.auth/user.json')
 
 setup('create test user and authenticate', async ({ page, request }) => {
-  await request.post('http://localhost:4000/api/auth/sign-up/email', {
+  await request.post('http://localhost:4001/api/auth/sign-up/email', {
     data: TEST_USER,
   })
 

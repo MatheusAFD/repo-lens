@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
+    "dev:test": "PLAYWRIGHT=true VITE_API_URL=http://localhost:4001 vite dev --port 3100",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests",

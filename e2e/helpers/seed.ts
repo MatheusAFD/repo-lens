@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { APIRequestContext } from '@playwright/test'
 
-const API_URL = 'http://localhost:4000'
+const API_URL = 'http://localhost:4001'
 
 export interface SeededRepository {
   id: string

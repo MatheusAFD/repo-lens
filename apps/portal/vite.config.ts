@@ -6,6 +6,8 @@ import viteTsConfigPaths from 'vite-tsconfig-paths'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 
+const isTestMode = !!process.env.PLAYWRIGHT || !!process.env.CI
+
 const config = defineConfig({
   resolve: {
     alias: [
@@ -20,7 +22,7 @@ const config = defineConfig({
     ],
   },
   plugins: [
-    devtools(),
+    !isTestMode && devtools(),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],

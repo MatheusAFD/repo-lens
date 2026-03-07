@@ -18,14 +18,14 @@ export default defineConfig({
   webServer: [
     {
       command: 'pnpm --filter @repo/api dev:test',
-      url: 'http://localhost:4000/api/auth/ok',
+      url: 'http://localhost:4001/api/auth/ok',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       name: 'API',
     },
     {
-      command: 'pnpm --filter @repo/portal dev',
-      url: 'http://localhost:3000',
+      command: 'pnpm --filter @repo/portal dev:test',
+      url: 'http://localhost:3100',
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       name: 'Portal',
@@ -37,7 +37,7 @@ export default defineConfig({
       name: 'portal-setup',
       testMatch: /portal\/setup\.ts/,
       use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: 'http://localhost:3100',
         ...devices['Desktop Chrome'],
       },
     },
@@ -46,7 +46,7 @@ export default defineConfig({
       testDir: './e2e/portal',
       dependencies: ['portal-setup'],
       use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: 'http://localhost:3100',
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/user.json',
       },

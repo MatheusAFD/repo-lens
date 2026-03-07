@@ -7,7 +7,7 @@ test.use({ storageState: { cookies: [], origins: [] } })
 test.describe('Portal — Sign Up', () => {
   test.beforeAll(async () => {
     const apiContext = await playwrightRequest.newContext()
-    await apiContext.post('http://localhost:4000/api/auth/sign-up/email', {
+    await apiContext.post('http://localhost:4001/api/auth/sign-up/email', {
       data: { name: 'Pre-existing User', email: DUPLICATE_EMAIL, password: 'TestPassword123' },
     })
     await apiContext.dispose()
