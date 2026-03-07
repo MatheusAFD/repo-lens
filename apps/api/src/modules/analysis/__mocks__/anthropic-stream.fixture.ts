@@ -82,19 +82,47 @@ const MOCK_RESULT_SECTIONS = [
         },
         {
           rank: 2,
-          title: 'Enable rate limiting',
+          title: 'Add input validation',
           impact: 'medium',
           effort: 'low',
-          rationale: 'Protects against abuse and DoS attacks',
+          rationale: 'Protects against invalid data entering the system',
         },
       ],
+    },
+  },
+  {
+    name: 'code_metrics',
+    data: {
+      totalFiles: 42,
+      estimatedLines: 3200,
+      byLanguage: [
+        { name: 'TypeScript', lines: 2800, percentage: 87 },
+        { name: 'SQL', lines: 400, percentage: 13 },
+      ],
+      largestFiles: [
+        { path: 'apps/api/src/modules/analysis/analysis.service.ts', lines: 280 },
+        { path: 'apps/portal/src/modules/analysis/components/analysis-page.tsx', lines: 360 },
+      ],
+    },
+  },
+  {
+    name: 'fun_facts',
+    data: {
+      facts: [
+        'The project has over 40 TypeScript files.',
+        'It uses a monorepo structure with shared packages.',
+        'The API is built with NestJS and uses Drizzle ORM for type-safe queries.',
+        'Authentication is handled via Better Auth with GitHub OAuth.',
+        'The frontend uses TanStack Start with server-side rendering.',
+      ],
+      codeAge: null,
     },
   },
 ]
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-async function* buildMockStream(): AsyncGenerator<ChunkType> {
+async function* buildMockStream(sections: string[]): AsyncGenerator<ChunkType> {
   await delay(300)
 
   yield {
@@ -102,7 +130,12 @@ async function* buildMockStream(): AsyncGenerator<ChunkType> {
     message: { usage: { input_tokens: 1000 } },
   }
 
-  for (const section of MOCK_RESULT_SECTIONS) {
+  const filtered =
+    sections.length > 0
+      ? MOCK_RESULT_SECTIONS.filter((s) => sections.includes(s.name))
+      : MOCK_RESULT_SECTIONS
+
+  for (const section of filtered) {
     const text = `##BEGIN_SECTION:${section.name}##\n${JSON.stringify(section.data)}\n##END_SECTION:${section.name}##\n`
 
     yield {
@@ -117,6 +150,6 @@ async function* buildMockStream(): AsyncGenerator<ChunkType> {
   }
 }
 
-export function createMockAnthropicStream() {
-  return buildMockStream()
+export function createMockAnthropicStream(sections: string[] = []) {
+  return buildMockStream(sections)
 }

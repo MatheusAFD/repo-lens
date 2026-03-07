@@ -9,6 +9,8 @@ const SECTION_LABELS = [
   'Dependencies',
   'Update Plan',
   'Recommendations',
+  'Code Metrics',
+  'Fun Facts',
 ]
 
 test.describe('Portal — Analysis', () => {
@@ -27,7 +29,7 @@ test.describe('Portal — Analysis', () => {
     await expect(page).toHaveURL(new RegExp(`/repos/${repo.id}/analyses/`), { timeout: 10_000 })
   })
 
-  test('after stream completes all 7 section tabs are visible', async ({ page, request }) => {
+  test('after stream completes all 9 section tabs are visible', async ({ page, request }) => {
     const repo = await seedRepository(request, {
       name: 'full-analysis-repo',
       fullName: 'test-owner/full-analysis-repo',
@@ -56,7 +58,7 @@ test.describe('Portal — Analysis', () => {
 
     await expect(page).toHaveURL(new RegExp(`/repos/${repo.id}/analyses/`), { timeout: 10_000 })
 
-    await expect(page.getByRole('button', { name: /re-analyze/i })).toBeVisible({
+    await expect(page.getByTestId('btn-reanalyze')).toBeVisible({
       timeout: 60_000,
     })
   })
@@ -77,31 +79,5 @@ test.describe('Portal — Analysis', () => {
     await securityTab.click()
 
     await expect(page.getByText(/grade|owasp|vulnerabilit/i)).toBeVisible()
-  })
-})
-
-test.describe('Portal — Rate Limiting', () => {
-  test('shows error when analysis rate limit is exceeded', async ({ page, request }) => {
-    const repo = await seedRepository(request, {
-      name: 'rate-limit-repo',
-      fullName: 'test-owner/rate-limit-repo',
-    })
-
-    await page.route(`**/analysis/${repo.id}/start`, async (route, req) => {
-      if (req.method() === 'POST') {
-        await route.fulfill({
-          status: 403,
-          contentType: 'application/json',
-          body: JSON.stringify({ message: 'Rate limit exceeded' }),
-        })
-      } else {
-        await route.continue()
-      }
-    })
-
-    await page.goto(`/repos/${repo.id}/analyses`)
-    await page.getByRole('button', { name: /new analysis/i }).click()
-
-    await expect(page.getByText(/rate limit|too many|limit exceeded/i)).toBeVisible()
   })
 })

@@ -13,6 +13,7 @@ export default defineConfig({
 
   use: {
     trace: 'on-first-retry',
+    reducedMotion: 'reduce',
   },
 
   webServer: [

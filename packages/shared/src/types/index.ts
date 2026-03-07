@@ -34,6 +34,8 @@ export type AnalysisSectionType =
   | 'dependencies'
   | 'update_plan'
   | 'recommendations'
+  | 'code_metrics'
+  | 'fun_facts'
 
 export type SecurityGrade = 'A' | 'B' | 'C' | 'D' | 'F'
 export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low'
@@ -119,6 +121,34 @@ export interface RecommendationsSection {
   items: RecommendationItem[]
 }
 
+export interface CodeMetricsSection {
+  totalFiles: number
+  estimatedLines: number
+  byLanguage: { name: string; lines: number; percentage: number }[]
+  largestFiles: { path: string; lines: number }[]
+}
+
+export interface FunFactsSection {
+  facts: string[]
+  codeAge?: string
+}
+
+export interface QuestionAnswer {
+  id: string
+  question: string
+  answer: string | null
+  createdAt: string
+}
+
+export interface StartAnalysisRequest {
+  sections: AnalysisSectionType[]
+  customContext?: string
+}
+
+export interface AskQuestionRequest {
+  question: string
+}
+
 export interface AnalysisResult {
   executive_summary?: ExecutiveSummarySection
   tech_stack?: TechStackSection
@@ -127,6 +157,8 @@ export interface AnalysisResult {
   dependencies?: DependenciesSection
   update_plan?: UpdatePlanSection
   recommendations?: RecommendationsSection
+  code_metrics?: CodeMetricsSection
+  fun_facts?: FunFactsSection
 }
 
 export type SseEvent =

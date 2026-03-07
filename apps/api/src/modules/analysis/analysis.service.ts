@@ -1,10 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { Subject, type Observable } from 'rxjs'
 import Anthropic from '@anthropic-ai/sdk'
 import { eq, and, desc } from 'drizzle-orm'
-import { randomUUID } from 'node:crypto'
 import { db } from '../../config/database'
-import { analysis, type repository } from '../../config/database/schema'
+import { analysis, analysisQuestion, type repository } from '../../config/database/schema'
 // biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
 import { GithubService } from '../github/github.service'
 // biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
@@ -13,10 +12,24 @@ import { ReposService } from '../repos/repos.service'
 import { ContextBuilderService } from './context-builder.service'
 // biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
 import { PromptBuilderService } from './prompt-builder.service'
-import type { AnalysisResult, AnalysisSectionType, SseEvent } from '@repo/shared'
+import type {
+  AnalysisResult,
+  AnalysisSectionType,
+  AskQuestionRequest,
+  SseEvent,
+} from '@repo/shared'
 
-const MAX_ANALYSES_PER_HOUR = 3
-const rateLimitMap = new Map<string, number[]>()
+const DEFAULT_SECTIONS: AnalysisSectionType[] = [
+  'executive_summary',
+  'tech_stack',
+  'architecture',
+  'security',
+  'dependencies',
+  'update_plan',
+  'recommendations',
+  'code_metrics',
+  'fun_facts',
+]
 
 @Injectable()
 export class AnalysisService {
@@ -33,23 +46,23 @@ export class AnalysisService {
     private readonly promptBuilder: PromptBuilderService,
   ) {}
 
-  async startAnalysis(repoId: string, userId: string): Promise<{ analysisId: string }> {
-    this.enforceRateLimit(userId)
-
+  async startAnalysis(
+    repoId: string,
+    userId: string,
+    sections: AnalysisSectionType[] = DEFAULT_SECTIONS,
+    customContext?: string,
+  ): Promise<{ analysisId: string }> {
     const [repoError, repo] = await this.reposService.getRepo(repoId, userId)
     if (repoError) throw repoError
 
-    const analysisId = randomUUID()
-    await db.insert(analysis).values({
-      id: analysisId,
-      repositoryId: repo.id,
-      userId,
-      status: 'running',
-    })
+    const [{ analysisId }] = await db
+      .insert(analysis)
+      .values({ repositoryId: repo.id, userId, status: 'running' })
+      .returning({ analysisId: analysis.id })
 
     this.subjects.set(analysisId, new Subject<MessageEvent>())
 
-    this.runAnalysis(analysisId, repo, userId).catch(async (runError) => {
+    this.runAnalysis(analysisId, repo, userId, sections, customContext).catch(async (runError) => {
       await db
         .update(analysis)
         .set({
@@ -147,6 +160,8 @@ export class AnalysisService {
     analysisId: string,
     repo: typeof repository.$inferSelect,
     userId: string,
+    sections: AnalysisSectionType[] = DEFAULT_SECTIONS,
+    customContext?: string,
   ) {
     this.results.set(analysisId, {})
 
@@ -185,7 +200,7 @@ export class AnalysisService {
       message: 'Analyzing with Claude AI…',
     })
 
-    const systemPrompt = this.promptBuilder.buildSystemPrompt()
+    const systemPrompt = this.promptBuilder.buildSystemPrompt(sections)
     const userPrompt = this.promptBuilder.buildUserPrompt(
       {
         owner: repo.owner,
@@ -194,6 +209,7 @@ export class AnalysisService {
         language: repo.language,
       },
       files,
+      customContext,
     )
 
     let buffer = ''
@@ -201,10 +217,10 @@ export class AnalysisService {
     let outputTokens = 0
     const stream = isMockMode
       ? // biome-ignore lint/suspicious/noExplicitAny: dynamic require used only in test mode
-        (require('./__mocks__/anthropic-stream.fixture') as any).createMockAnthropicStream()
+        (require('./__mocks__/anthropic-stream.fixture') as any).createMockAnthropicStream(sections)
       : this.anthropic.messages.stream({
           model: 'claude-sonnet-4-6',
-          max_tokens: 4096,
+          max_tokens: 8192,
           system: systemPrompt,
           messages: [{ role: 'user', content: userPrompt }],
         })
@@ -242,7 +258,6 @@ export class AnalysisService {
 
   private parseAndEmitSections(analysisId: string, buffer: string): string {
     const beginPattern = /##BEGIN_SECTION:(\w+)##/
-    const endPattern = /##END_SECTION:(\w+)##/
 
     let remaining = buffer
 
@@ -271,27 +286,88 @@ export class AnalysisService {
     return remaining
   }
 
+  async getQuestions(analysisId: string, userId: string) {
+    const [row] = await db
+      .select()
+      .from(analysis)
+      .where(and(eq(analysis.id, analysisId), eq(analysis.userId, userId)))
+
+    if (!row) throw new NotFoundException('Analysis not found')
+
+    return db
+      .select()
+      .from(analysisQuestion)
+      .where(eq(analysisQuestion.analysisId, analysisId))
+      .orderBy(analysisQuestion.createdAt)
+  }
+
+  async askQuestion(
+    analysisId: string,
+    userId: string,
+    { question }: AskQuestionRequest,
+  ): Promise<Observable<MessageEvent>> {
+    const [row] = await db
+      .select()
+      .from(analysis)
+      .where(and(eq(analysis.id, analysisId), eq(analysis.userId, userId)))
+
+    if (!row) throw new NotFoundException('Analysis not found')
+
+    const [{ questionId }] = await db
+      .insert(analysisQuestion)
+      .values({ analysisId, userId, question })
+      .returning({ questionId: analysisQuestion.id })
+
+    const savedResult = row.result ? (JSON.parse(row.result) as Partial<AnalysisResult>) : {}
+    const contextSummary = JSON.stringify(savedResult, null, 2).slice(0, 8000)
+
+    const systemPrompt = `You are an expert assistant for the repository ${row.repositoryId}. Answer questions concisely based on the analysis context provided.`
+    const userPrompt = `Analysis context:\n${contextSummary}\n\nQuestion: ${question}`
+
+    const subject = new Subject<MessageEvent>()
+
+    const streamKey = `ask:${questionId}`
+    this.subjects.set(streamKey, subject)
+
+    const runStream = async () => {
+      let answer = ''
+      const stream = this.anthropic.messages.stream({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      })
+
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          answer += chunk.delta.text
+          const event: SseEvent = { type: 'progress', message: chunk.delta.text }
+          subject.next(new MessageEvent('message', { data: JSON.stringify(event) }))
+        }
+      }
+
+      await db.update(analysisQuestion).set({ answer }).where(eq(analysisQuestion.id, questionId))
+
+      const doneEvent: SseEvent = { type: 'done', analysisId: questionId }
+      subject.next(new MessageEvent('message', { data: JSON.stringify(doneEvent) }))
+      subject.complete()
+      this.subjects.delete(streamKey)
+    }
+
+    runStream().catch((err) => {
+      const errorEvent: SseEvent = { type: 'error', message: err?.message ?? 'Failed to answer' }
+      subject.next(new MessageEvent('message', { data: JSON.stringify(errorEvent) }))
+      subject.complete()
+      this.subjects.delete(streamKey)
+    })
+
+    return subject.asObservable()
+  }
+
   private emit(analysisId: string, event: SseEvent) {
     const subject = this.subjects.get(analysisId)
     if (!subject) return
     const msg = new MessageEvent('message', { data: JSON.stringify(event) })
     subject.next(msg)
-  }
-
-  private enforceRateLimit(userId: string) {
-    if (process.env.NODE_ENV !== 'production') return
-
-    const now = Date.now()
-    const hourAgo = now - 60 * 60 * 1000
-    const timestamps = (rateLimitMap.get(userId) ?? []).filter((timestamp) => timestamp > hourAgo)
-
-    if (timestamps.length >= MAX_ANALYSES_PER_HOUR) {
-      throw new ForbiddenException(
-        `Rate limit exceeded: max ${MAX_ANALYSES_PER_HOUR} analyses per hour`,
-      )
-    }
-
-    timestamps.push(now)
-    rateLimitMap.set(userId, timestamps)
   }
 }

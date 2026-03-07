@@ -135,6 +135,45 @@ function CheckCircleIcon() {
   )
 }
 
+function BarChartIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+      <line x1="2" y1="20" x2="22" y2="20" />
+    </svg>
+  )
+}
+
+function LightbulbIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="9" y1="18" x2="15" y2="18" />
+      <line x1="10" y1="22" x2="14" y2="22" />
+      <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+    </svg>
+  )
+}
+
 export const SECTION_ICONS: Record<AnalysisSectionType, React.ReactNode> = {
   executive_summary: <DocumentIcon />,
   tech_stack: <LayersIcon />,
@@ -143,4 +182,6 @@ export const SECTION_ICONS: Record<AnalysisSectionType, React.ReactNode> = {
   dependencies: <PackageIcon />,
   update_plan: <ArrowUpIcon />,
   recommendations: <CheckCircleIcon />,
+  code_metrics: <BarChartIcon />,
+  fun_facts: <LightbulbIcon />,
 }

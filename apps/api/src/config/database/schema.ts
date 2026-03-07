@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm'
 import { pgTable, text, timestamp, boolean, index, integer } from 'drizzle-orm/pg-core'
+import { randomUUID } from 'node:crypto'
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -101,7 +102,9 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const repository = pgTable(
   'repository',
   {
-    id: text('id').primaryKey(),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
@@ -128,7 +131,9 @@ export const repository = pgTable(
 export const analysis = pgTable(
   'analysis',
   {
-    id: text('id').primaryKey(),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
     repositoryId: text('repository_id')
       .notNull()
       .references(() => repository.id, { onDelete: 'cascade' }),
@@ -154,7 +159,32 @@ export const repositoryRelations = relations(repository, ({ one, many }) => ({
   analyses: many(analysis),
 }))
 
-export const analysisRelations = relations(analysis, ({ one }) => ({
+export const analysisRelations = relations(analysis, ({ one, many }) => ({
   repository: one(repository, { fields: [analysis.repositoryId], references: [repository.id] }),
   user: one(user, { fields: [analysis.userId], references: [user.id] }),
+  questions: many(analysisQuestion),
+}))
+
+export const analysisQuestion = pgTable(
+  'analysis_question',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    analysisId: text('analysis_id')
+      .notNull()
+      .references(() => analysis.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    question: text('question').notNull(),
+    answer: text('answer'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('analysis_question_analysisId_idx').on(table.analysisId)],
+)
+
+export const analysisQuestionRelations = relations(analysisQuestion, ({ one }) => ({
+  analysis: one(analysis, { fields: [analysisQuestion.analysisId], references: [analysis.id] }),
+  user: one(user, { fields: [analysisQuestion.userId], references: [user.id] }),
 }))

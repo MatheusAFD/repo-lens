@@ -17,29 +17,60 @@ describe('PromptBuilderService', () => {
   })
 
   describe('buildSystemPrompt', () => {
-    it('contains all 7 section names', () => {
-      const prompt = service.buildSystemPrompt()
+    it('contains all requested section names', () => {
+      const sections = [
+        'executive_summary',
+        'tech_stack',
+        'architecture',
+        'security',
+        'dependencies',
+        'update_plan',
+        'recommendations',
+      ] as const
+      const prompt = service.buildSystemPrompt([...sections])
 
-      expect(prompt).toContain('executive_summary')
-      expect(prompt).toContain('tech_stack')
-      expect(prompt).toContain('architecture')
-      expect(prompt).toContain('security')
-      expect(prompt).toContain('dependencies')
-      expect(prompt).toContain('update_plan')
-      expect(prompt).toContain('recommendations')
+      for (const section of sections) {
+        expect(prompt).toContain(section)
+      }
     })
 
     it('contains BEGIN_SECTION and END_SECTION marker patterns', () => {
-      const prompt = service.buildSystemPrompt()
+      const prompt = service.buildSystemPrompt(['executive_summary', 'security'])
 
       expect(prompt).toContain('##BEGIN_SECTION:')
       expect(prompt).toContain('##END_SECTION:')
     })
 
-    it('mentions the 7-section count', () => {
-      const prompt = service.buildSystemPrompt()
+    it('only includes requested sections — omits others', () => {
+      const prompt = service.buildSystemPrompt(['executive_summary', 'security'])
 
-      expect(prompt).toContain('7')
+      expect(prompt).toContain('executive_summary')
+      expect(prompt).toContain('security')
+      expect(prompt).not.toContain('tech_stack')
+      expect(prompt).not.toContain('dependencies')
+    })
+
+    it('mentions correct section count', () => {
+      const prompt = service.buildSystemPrompt(['executive_summary', 'security'])
+
+      expect(prompt).toContain('2')
+    })
+
+    it('includes code_metrics shape when requested', () => {
+      const prompt = service.buildSystemPrompt(['code_metrics'])
+
+      expect(prompt).toContain('code_metrics')
+      expect(prompt).toContain('totalFiles')
+      expect(prompt).toContain('estimatedLines')
+      expect(prompt).toContain('largestFiles')
+    })
+
+    it('includes fun_facts shape when requested', () => {
+      const prompt = service.buildSystemPrompt(['fun_facts'])
+
+      expect(prompt).toContain('fun_facts')
+      expect(prompt).toContain('facts')
+      expect(prompt).toContain('codeAge')
     })
   })
 
@@ -112,6 +143,25 @@ describe('PromptBuilderService', () => {
       )
 
       expect(prompt).toContain('Description: A cool app')
+    })
+
+    it('includes customContext when provided', () => {
+      const prompt = service.buildUserPrompt(
+        { owner: 'acme', name: 'my-app', language: 'TypeScript', description: null },
+        files,
+        'This is a B2B SaaS focused on LGPD compliance',
+      )
+
+      expect(prompt).toContain('This is a B2B SaaS focused on LGPD compliance')
+    })
+
+    it('does not include customContext section when not provided', () => {
+      const prompt = service.buildUserPrompt(
+        { owner: 'acme', name: 'my-app', language: 'TypeScript', description: null },
+        files,
+      )
+
+      expect(prompt).not.toContain('Additional context from the user')
     })
   })
 })

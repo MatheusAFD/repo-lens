@@ -1,10 +1,11 @@
 import { getAnalysis, getLatestAnalysis, startAnalysis } from '@/services/http/analysis'
+import type { StartAnalysisRequest } from '@repo/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 export function useStartAnalysis(repoId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => startAnalysis(repoId),
+    mutationFn: (body?: StartAnalysisRequest) => startAnalysis(repoId, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['repos', repoId, 'analyses'] })
       queryClient.invalidateQueries({ queryKey: ['repos'] })
@@ -25,6 +26,6 @@ export function useAnalysis(analysisId: string | null) {
     queryKey: ['analysis', analysisId],
     queryFn: () => getAnalysis(analysisId ?? ''),
     enabled: !!analysisId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   })
 }

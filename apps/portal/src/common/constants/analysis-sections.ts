@@ -39,6 +39,16 @@ export const SECTION_META: Record<
     description: 'Top actions ordered by impact',
     icon: '✅',
   },
+  code_metrics: {
+    label: 'Code Metrics',
+    description: 'Lines of code, file sizes, and language breakdown',
+    icon: '📊',
+  },
+  fun_facts: {
+    label: 'Fun Facts',
+    description: 'Curious observations about the project',
+    icon: '💡',
+  },
 }
 
 export const SECTION_ORDER: AnalysisSectionType[] = [
@@ -49,4 +59,30 @@ export const SECTION_ORDER: AnalysisSectionType[] = [
   'dependencies',
   'update_plan',
   'recommendations',
+  'code_metrics',
+  'fun_facts',
+]
+
+export const PRODUCT_SECTIONS: AnalysisSectionType[] = [
+  'executive_summary',
+  'fun_facts',
+  'recommendations',
+]
+
+export const TECHNICAL_SECTIONS: AnalysisSectionType[] = [
+  'tech_stack',
+  'architecture',
+  'security',
+  'dependencies',
+  'update_plan',
+  'code_metrics',
+]
+
+export const RECOMMENDED_SECTIONS: AnalysisSectionType[] = [
+  'executive_summary',
+  'security',
+  'architecture',
+  'recommendations',
+  'tech_stack',
+  'fun_facts',
 ]

@@ -29,7 +29,7 @@ function RepoAnalysesPage() {
     )
   }
 
-  if (hasError) {
+  if (hasError || !repo) {
     return (
       <div className="min-h-screen bg-background">
         <AppHeader />

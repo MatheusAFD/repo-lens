@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common'
+import { NotFoundException } from '@nestjs/common'
 import { Test, type TestingModule } from '@nestjs/testing'
 
 jest.mock('@thallesp/nestjs-better-auth', () => ({
@@ -107,32 +107,41 @@ describe('AnalysisService', () => {
       expect(typeof result.analysisId).toBe('string')
     })
 
-    it('enforces rate limit: throws ForbiddenException after 3 calls per hour', async () => {
-      const mockRepo = {
-        id: 'repo-1',
-        owner: 'owner',
-        name: 'repo',
-        userId: 'user-rate',
-      }
+    it('calls buildSystemPrompt with provided sections subset', async () => {
+      const mockRepo = { id: 'repo-1', owner: 'owner', name: 'repo', userId: 'user-1' }
       mockReposService.getRepo.mockResolvedValue([null, mockRepo])
-
-      mockDb.insert = jest.fn().mockReturnValue({
-        values: jest.fn().mockResolvedValue([]),
-      })
+      mockDb.insert = jest.fn().mockReturnValue({ values: jest.fn().mockResolvedValue([]) })
       mockDb.update = jest.fn().mockReturnValue({
-        set: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([]),
-        }),
+        set: jest.fn().mockReturnValue({ where: jest.fn().mockResolvedValue([]) }),
       })
 
-      mockGithubService.getToken.mockResolvedValue('ghp_token')
-      mockGithubService.getRepoTree.mockResolvedValue([null, []])
+      await service.startAnalysis('repo-1', 'user-1', ['executive_summary', 'security'])
 
-      await service.startAnalysis('repo-1', 'user-rate')
-      await service.startAnalysis('repo-1', 'user-rate')
-      await service.startAnalysis('repo-1', 'user-rate')
+      await new Promise((r) => setTimeout(r, 500))
 
-      await expect(service.startAnalysis('repo-1', 'user-rate')).rejects.toThrow(ForbiddenException)
+      expect(mockPromptBuilder.buildSystemPrompt).toHaveBeenCalledWith([
+        'executive_summary',
+        'security',
+      ])
+    })
+
+    it('passes customContext to buildUserPrompt', async () => {
+      const mockRepo = { id: 'repo-1', owner: 'owner', name: 'repo', userId: 'user-1' }
+      mockReposService.getRepo.mockResolvedValue([null, mockRepo])
+      mockDb.insert = jest.fn().mockReturnValue({ values: jest.fn().mockResolvedValue([]) })
+      mockDb.update = jest.fn().mockReturnValue({
+        set: jest.fn().mockReturnValue({ where: jest.fn().mockResolvedValue([]) }),
+      })
+
+      await service.startAnalysis('repo-1', 'user-1', ['executive_summary'], 'B2B SaaS context')
+
+      await new Promise((r) => setTimeout(r, 500))
+
+      expect(mockPromptBuilder.buildUserPrompt).toHaveBeenCalledWith(
+        expect.objectContaining({ owner: 'owner', name: 'repo' }),
+        expect.any(Array),
+        'B2B SaaS context',
+      )
     })
   })
 
@@ -221,6 +230,52 @@ describe('AnalysisService', () => {
 
       expect(result).not.toBeNull()
       expect(result?.result).toEqual(resultData)
+    })
+  })
+  describe('askQuestion', () => {
+    it('throws NotFoundException when analysis does not belong to user', async () => {
+      mockDb.select = jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue([]),
+        }),
+      })
+
+      await expect(
+        service.askQuestion('non-existent', 'user-1', { question: 'What does this do?' }),
+      ).rejects.toThrow(NotFoundException)
+    })
+
+    it('returns an Observable when analysis exists', async () => {
+      const mockRow = {
+        id: 'analysis-1',
+        repositoryId: 'repo-1',
+        userId: 'user-1',
+        status: 'completed',
+        result: JSON.stringify({ executive_summary: { summary: 'Good project' } }),
+      }
+
+      mockDb.select = jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue([mockRow]),
+        }),
+      })
+
+      mockDb.insert = jest.fn().mockReturnValue({
+        values: jest.fn().mockResolvedValue([]),
+      })
+
+      mockDb.update = jest.fn().mockReturnValue({
+        set: jest.fn().mockReturnValue({
+          where: jest.fn().mockResolvedValue([]),
+        }),
+      })
+
+      const result = await service.askQuestion('analysis-1', 'user-1', {
+        question: 'What is the main purpose?',
+      })
+
+      expect(result).toBeDefined()
+      expect(typeof result.subscribe).toBe('function')
     })
   })
 })

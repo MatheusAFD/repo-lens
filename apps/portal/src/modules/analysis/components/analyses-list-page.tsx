@@ -43,7 +43,7 @@ export function AnalysesListPage({ repo }: AnalysesListPageProps) {
     setIsStarting(true)
     setStartError(null)
     try {
-      const { analysisId } = await startAnalysis()
+      const { analysisId } = await startAnalysis(undefined)
       navigate({
         to: '/repos/$repoId/analyses/$analysisId' as never,
         params: { repoId: repo.id, analysisId } as never,
