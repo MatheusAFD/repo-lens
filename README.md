@@ -64,7 +64,7 @@ BETTER_AUTH_URL=http://localhost:4000
 ALLOWED_ORIGINS=http://localhost:3000
 
 # AI Analysis
-ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_API_KEY=
 
 # GitHub OAuth (create at github.com/settings/applications/new)
 # Callback URL: http://localhost:4000/api/auth/callback/github
