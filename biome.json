@@ -42,7 +42,18 @@
       }
     }
   },
-  "overrides": [],
+  "overrides": [
+    {
+      "include": ["apps/api/src/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useImportType": "off"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "parser": {
       "unsafeParameterDecoratorsEnabled": true

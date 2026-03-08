@@ -3,7 +3,6 @@ import { Throttle } from '@nestjs/throttler'
 import type { Observable } from 'rxjs'
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth'
 import type { AskQuestionRequest, StartAnalysisRequest } from '@repo/shared'
-// biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
 import { AnalysisService } from './analysis.service'
 
 @Controller('analysis')

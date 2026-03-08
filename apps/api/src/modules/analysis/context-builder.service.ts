@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import type { GithubService, GithubTreeItem } from '../github/github.service'
+import { GithubService, type GithubTreeItem } from '../github/github.service'
 
 const MANIFEST_SCORE: Record<string, number> = {
   'package.json': 100,

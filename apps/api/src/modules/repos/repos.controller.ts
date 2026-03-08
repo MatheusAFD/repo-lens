@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common'
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth'
-import type { ReposService, UpsertRepoDto } from './repos.service'
+import { ReposService, type UpsertRepoDto } from './repos.service'
 
 @Controller('repos')
 export class ReposController {
