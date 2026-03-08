@@ -1,6 +1,5 @@
 import { Controller, Delete, Get, Param } from '@nestjs/common'
 import { Roles } from '@thallesp/nestjs-better-auth'
-// biome-ignore lint/style/useImportType: NestJS DI requires runtime import
 import { SessionsService } from './sessions.service'
 
 @Controller('sessions')

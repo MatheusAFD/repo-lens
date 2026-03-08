@@ -94,7 +94,9 @@ describe('AnalysisService', () => {
       mockReposService.getRepo.mockResolvedValue([null, mockRepo])
 
       mockDb.insert = jest.fn().mockReturnValue({
-        values: jest.fn().mockResolvedValue([]),
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([{ analysisId: 'analysis-1' }]),
+        }),
       })
 
       mockGithubService.getToken.mockResolvedValue('ghp_token')
@@ -115,7 +117,11 @@ describe('AnalysisService', () => {
     it('calls buildSystemPrompt with provided sections subset', async () => {
       const mockRepo = { id: 'repo-1', owner: 'owner', name: 'repo', userId: 'user-1' }
       mockReposService.getRepo.mockResolvedValue([null, mockRepo])
-      mockDb.insert = jest.fn().mockReturnValue({ values: jest.fn().mockResolvedValue([]) })
+      mockDb.insert = jest.fn().mockReturnValue({
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([{ analysisId: 'analysis-1' }]),
+        }),
+      })
       mockDb.update = jest.fn().mockReturnValue({
         set: jest.fn().mockReturnValue({ where: jest.fn().mockResolvedValue([]) }),
       })
@@ -133,7 +139,11 @@ describe('AnalysisService', () => {
     it('passes customContext to buildUserPrompt', async () => {
       const mockRepo = { id: 'repo-1', owner: 'owner', name: 'repo', userId: 'user-1' }
       mockReposService.getRepo.mockResolvedValue([null, mockRepo])
-      mockDb.insert = jest.fn().mockReturnValue({ values: jest.fn().mockResolvedValue([]) })
+      mockDb.insert = jest.fn().mockReturnValue({
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([{ analysisId: 'analysis-1' }]),
+        }),
+      })
       mockDb.update = jest.fn().mockReturnValue({
         set: jest.fn().mockReturnValue({ where: jest.fn().mockResolvedValue([]) }),
       })
@@ -266,7 +276,9 @@ describe('AnalysisService', () => {
       })
 
       mockDb.insert = jest.fn().mockReturnValue({
-        values: jest.fn().mockResolvedValue([]),
+        values: jest.fn().mockReturnValue({
+          returning: jest.fn().mockResolvedValue([{ questionId: 'question-1' }]),
+        }),
       })
 
       mockDb.update = jest.fn().mockReturnValue({
