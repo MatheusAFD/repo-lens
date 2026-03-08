@@ -7,17 +7,12 @@ import type { SecurityGrade } from '@repo/shared'
 import { Button } from '@repo/ui/components/button'
 import { Skeleton } from '@repo/ui/components/skeleton'
 import { Link, useNavigate } from '@tanstack/react-router'
+import { formatDate } from '@/common/utils/format'
+import { ChevronRight, Search } from 'lucide-react'
 import { useState } from 'react'
 
 interface AnalysesListPageProps {
   repo: Repository
-}
-
-function formatDate(dateStr: string) {
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(dateStr))
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -108,7 +103,7 @@ export function AnalysesListPage({ repo }: AnalysesListPageProps) {
           <div className="rounded-xl border border-dashed border-border p-16 text-center space-y-3">
             <div className="flex justify-center">
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                <SearchIcon className="w-5 h-5 text-muted-foreground" />
+                <Search className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
               </div>
             </div>
             <p className="text-sm font-medium">No analyses yet</p>
@@ -150,7 +145,7 @@ export function AnalysesListPage({ repo }: AnalysesListPageProps) {
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <StatusBadge status={analysis.status} />
-                    <ChevronRightIcon className="w-4 h-4 text-muted-foreground" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
                   </div>
                 </Link>
               )
@@ -159,40 +154,5 @@ export function AnalysesListPage({ repo }: AnalysesListPageProps) {
         )}
       </main>
     </div>
-  )
-}
-
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  )
-}
-
-function ChevronRightIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
   )
 }

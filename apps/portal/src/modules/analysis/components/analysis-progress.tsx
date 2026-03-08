@@ -1,8 +1,8 @@
+import { useMouseDragScroll } from '@/common/hooks/use-mouse-drag-scroll'
 import { SECTION_ICONS } from '@/common/components/section-icons'
 import { SECTION_META, SECTION_ORDER } from '@/common/constants/analysis-sections'
 import type { AnalysisSectionType } from '@repo/shared'
 import { cn } from '@repo/ui/lib/utils'
-import { useEffect, useRef } from 'react'
 
 interface AnalysisProgressProps {
   completedSections: AnalysisSectionType[]
@@ -11,7 +11,7 @@ interface AnalysisProgressProps {
 
 export function AnalysisProgress({ completedSections, currentMessage }: AnalysisProgressProps) {
   const completedSet = new Set(completedSections)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useMouseDragScroll<HTMLDivElement>()
 
   const scrollActiveIntoView = (el: HTMLDivElement | null) => {
     const container = containerRef.current
@@ -24,38 +24,6 @@ export function AnalysisProgress({ completedSections, currentMessage }: Analysis
       behavior: 'smooth',
     })
   }
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    let isDown = false
-    let startX = 0
-    let scrollLeft = 0
-    const onMouseDown = (e: MouseEvent) => {
-      isDown = true
-      startX = e.pageX - el.offsetLeft
-      scrollLeft = el.scrollLeft
-      el.style.cursor = 'grabbing'
-    }
-    const onMouseUp = () => {
-      isDown = false
-      el.style.cursor = ''
-    }
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDown) return
-      e.preventDefault()
-      const x = e.pageX - el.offsetLeft
-      el.scrollLeft = scrollLeft - (x - startX)
-    }
-    el.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('mouseup', onMouseUp)
-    el.addEventListener('mousemove', onMouseMove)
-    return () => {
-      el.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mouseup', onMouseUp)
-      el.removeEventListener('mousemove', onMouseMove)
-    }
-  }, [])
 
   return (
     <div className="space-y-3">
