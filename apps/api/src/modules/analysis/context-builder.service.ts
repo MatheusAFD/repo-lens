@@ -145,7 +145,8 @@ export class ContextBuilderService {
     const depth = item.path.split('/').length - 1
     if (depth > 3) fileScore -= (depth - 3) * 8
 
-    if (/\/(vendor|node_modules|dist|build|\.next|\.turbo|coverage)\//.test(item.path)) return -1
+    if (/(^|\/)node_modules\//.test(item.path)) return -1
+    if (/\/(vendor|dist|build|\.next|\.turbo|coverage)\//.test(item.path)) return -1
 
     return Math.max(fileScore, 0)
   }

@@ -15,9 +15,10 @@ jest.mock('../../config/database', () => ({
   },
 }))
 
-jest.mock('@anthropic-ai/sdk', () => ({
-  default: jest.fn().mockImplementation(() => ({})),
-}))
+jest.mock('@anthropic-ai/sdk', () => {
+  const MockAnthropic = jest.fn().mockImplementation(() => ({}))
+  return { default: MockAnthropic, __esModule: true }
+})
 
 import { AnalysisService } from './analysis.service'
 import { GithubService } from '../github/github.service'
