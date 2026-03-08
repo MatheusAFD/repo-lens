@@ -1,14 +1,13 @@
-# Mono Repo Auth - Architecture Documentation
+# RepoLens - Architecture Documentation
 
 ## Architecture Overview
 
-This project follows a **modular monolith architecture** with clear separation of concerns across a monorepo with three apps and shared packages.
+This project follows a **modular monolith architecture** with clear separation of concerns across a monorepo with two apps and shared packages.
 
 ```
-mono-repo-auth/
+repo-ai-analyzer/
 ├── apps/
 │   ├── portal/          # TanStack Start — portal do usuário (porta 3000)
-│   ├── backoffice/      # TanStack Start — painel administrativo (porta 3001)
 │   └── api/             # NestJS — API REST (porta 4000)
 ├── packages/
 │   ├── ui/              # Componentes compartilhados (Shadcn + Radix)
@@ -374,7 +373,7 @@ if (error.status === HttpStatusCodes.UNAUTHORIZED) {
 
 ## E2E Testing (Playwright)
 
-Testes end-to-end ficam na pasta `e2e/` na raiz do monorepo, organizados por app (`portal/` e `backoffice/`). A configuração central está em `playwright.config.ts`.
+Testes end-to-end ficam na pasta `e2e/` na raiz do monorepo, organizados por app (apenas `portal/`). A configuração central está em `playwright.config.ts`.
 
 Para detalhes completos sobre como escrever testes, boas práticas, e padrões avançados, consulte [`docs/TESTING.md`](TESTING.md).
 
@@ -384,7 +383,7 @@ Para detalhes completos sobre como escrever testes, boas práticas, e padrões a
 
 ```ts
 @Controller('sessions')
-@Roles(['backoffice']) // Apenas usuários com role 'backoffice'
+@Roles(['admin'])
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 

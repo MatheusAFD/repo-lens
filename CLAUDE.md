@@ -1,4 +1,4 @@
-# CLAUDE.md — Mono Repo Auth
+# CLAUDE.md — RepoLens
 
 > Reference guide for Claude Code to work in this monorepo.
 > Full architecture and coding rules are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/CODING-STANDARDS.md`](docs/CODING-STANDARDS.md) and [`docs/TESTING.md`](docs/TESTING.md).
@@ -8,10 +8,9 @@
 ## Monorepo Structure
 
 ```
-mono-repo-auth/
+repo-ai-analyzer/
 ├── apps/
 │   ├── portal/          # TanStack Start (port 3000) — end-user portal
-│   ├── backoffice/      # TanStack Start (port 3001) — admin panel
 │   └── api/             # NestJS + Express (port 4000) — REST API
 ├── packages/
 │   ├── ui/              # Component library (Vite + Shadcn/UI + Radix UI)
@@ -19,8 +18,7 @@ mono-repo-auth/
 │   ├── shared/          # Shared types and utilities
 │   └── typescript-config/ # Reusable tsconfig bases
 ├── e2e/
-│   ├── portal/          # Portal E2E tests
-│   └── backoffice/      # Backoffice E2E tests
+│   └── portal/          # Portal E2E tests
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── CODING-STANDARDS.md
@@ -38,8 +36,7 @@ mono-repo-auth/
 | Project | Technology | Port |
 |---|---|---|
 | `apps/portal` | TanStack Start v1, React 19, TanStack Query, Better Auth client | 3000 |
-| `apps/backoffice` | TanStack Start v1, React 19, TanStack Query, Better Auth client | 3001 |
-| `apps/api` | NestJS v11, Express, Drizzle ORM, Better Auth, PostgreSQL | 4000 |
+| `apps/api` | NestJS v11, Express, Drizzle ORM, Better Auth, PostgreSQL, Anthropic SDK | 4000 |
 | `packages/ui` | Vite, React 19, Shadcn/UI (styling), Radix UI | — |
 | `packages/auth` | better-auth (shared client factory) | — |
 | `packages/shared` | Pure TypeScript — types and Result/ok/err utilities | — |
@@ -57,7 +54,6 @@ pnpm dev
 
 # Development for a specific project
 pnpm --filter @repo/portal dev
-pnpm --filter @repo/backoffice dev
 pnpm --filter @repo/api dev
 
 # Production build
@@ -81,7 +77,6 @@ pnpm --filter @repo/api db:studio
 # E2E Tests (Playwright)
 pnpm test:e2e                  # Run all E2E tests
 pnpm test:e2e:portal           # Portal tests only
-pnpm test:e2e:backoffice       # Backoffice tests only
 pnpm test:e2e:ui               # Interactive mode (UI Mode)
 ```
 
@@ -96,19 +91,17 @@ pnpm test:e2e:ui               # Interactive mode (UI Mode)
 VITE_API_URL=http://localhost:4000
 ```
 
-### `apps/backoffice/.env`
-```env
-VITE_API_URL=http://localhost:4000
-```
-
 ### `apps/api/.env`
 ```env
 NODE_ENV=development
 PORT=4000
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mono_repo_auth
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/repo_lens
 BETTER_AUTH_SECRET=your-super-secret-key-change-in-production-min-32-chars
 BETTER_AUTH_URL=http://localhost:4000
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+ALLOWED_ORIGINS=http://localhost:3000
+ANTHROPIC_API_KEY=your-anthropic-api-key
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
 ```
 
 ---
@@ -126,7 +119,7 @@ Configure in your `~/.claude/settings.json` or `.claude/settings.local.json`:
     },
     "filesystem": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/matheusfernandes/www/mono-repo-auth"]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/matheusfernandes/www/personal/repo-ai-analyzer"]
     },
     "github": {
       "command": "npx",
@@ -219,7 +212,7 @@ npx shadcn@latest add <component>
 
 ---
 
-## Module Structure (Portal/Backoffice)
+## Module Structure (Portal)
 
 ```
 src/modules/{feature}/
@@ -234,6 +227,15 @@ src/modules/{feature}/
 ---
 
 ## Backend — NestJS Conventions
+
+### API Modules
+
+The API has the following modules in `apps/api/src/modules/`:
+
+- `analysis/` — AI analysis pipeline (Anthropic SDK, SSE streaming)
+- `github/` — GitHub OAuth and repository access
+- `repos/` — Repository management and analysis orchestration
+- `sessions/` — User session management
 
 ### Create a new module
 ```bash
@@ -261,15 +263,6 @@ import { Session, type UserSession } from '@thallesp/nestjs-better-auth'
 getMe(@Session() session: UserSession) { return session.user }
 ```
 
-### Role-based protection
-```ts
-import { Roles } from '@thallesp/nestjs-better-auth'
-
-@Controller('sessions')
-@Roles(['backoffice']) // Only users with 'backoffice' role
-export class SessionsController { ... }
-```
-
 ### Better Auth on the Backend
 
 Better Auth exposes all authentication routes at `/api/auth/*`. The `AuthModule` from `@thallesp/nestjs-better-auth` bridges Express and the Better Auth handler. **Do not** create authentication routes manually.
@@ -294,7 +287,7 @@ docker-compose down -v
 ```
 
 Available services after `docker-compose up`:
-- PostgreSQL: `localhost:5432` (user: `postgres`, pass: `postgres`, db: `mono_repo_auth`)
+- PostgreSQL: `localhost:5432` (user: `postgres`, pass: `postgres`, db: `repo_lens`)
 
 ---
 
@@ -314,7 +307,7 @@ Git hooks are managed by [Husky](https://typicode.github.io/husky/) and enforce 
 type(scope): description
 
 # Examples:
-feat(portal): add user profile page
+feat(portal): add repository analysis page
 fix(api): handle null session in auth middleware
 chore: update dependencies
 docs: update ARCHITECTURE.md
@@ -349,3 +342,4 @@ Allowed types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `buil
 - [Drizzle ORM](https://orm.drizzle.team)
 - [Playwright](https://playwright.dev)
 - [Turborepo](https://turbo.build)
+- [Anthropic SDK](https://github.com/anthropics/anthropic-sdk-typescript)

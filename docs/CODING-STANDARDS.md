@@ -253,6 +253,5 @@ import { cn } from '../../../common/lib/utils'
 2. Use Biome for code formatting (runs on commit via Husky)
 3. Write tests for new features
 4. Use TypeScript strictly (no `any` types)
-5. Document complex logic with comments
-6. Keep components small and focused (< 200 lines)
-7. Prefer composition over inheritance
+5. Keep components small and focused (< 200 lines)
+6. Prefer composition over inheritance

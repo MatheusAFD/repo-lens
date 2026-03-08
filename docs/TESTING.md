@@ -2,14 +2,14 @@
 
 ## Visão Geral
 
-O monorepo usa **Playwright** para testes E2E dos frontends (Portal e Backoffice). A configuração está na raiz do projeto em `playwright.config.ts` com dois projetos separados, cada um apontando para seu respectivo app.
+O monorepo usa **Playwright** para testes E2E do frontend (Portal). A configuração está na raiz do projeto em `playwright.config.ts` com três projetos: `portal-setup`, `portal` e `backoffice` (reservado para uso futuro).
 
 | Projeto | App | Base URL | Diretório de Testes |
 |---|---|---|---|
-| `portal` | `apps/portal` | `http://localhost:3000` | `e2e/portal/` |
-| `backoffice` | `apps/backoffice` | `http://localhost:3001` | `e2e/backoffice/` |
+| `portal-setup` | `apps/portal` | `http://localhost:3100` | `e2e/portal/setup.ts` |
+| `portal` | `apps/portal` | `http://localhost:3100` | `e2e/portal/` |
 
-Os três dev servers (API, Portal, Backoffice) são iniciados automaticamente via `webServer` do Playwright.
+Os dois dev servers (API em modo test e Portal em modo test) são iniciados automaticamente via `webServer` do Playwright.
 
 ---
 
@@ -17,19 +17,25 @@ Os três dev servers (API, Portal, Backoffice) são iniciados automaticamente vi
 
 ```
 e2e/
-├── portal/
-│   ├── home.spec.ts
-│   ├── sign-in.spec.ts
-│   └── {feature}.spec.ts
-└── backoffice/
-    ├── home.spec.ts
+├── CLAUDE.md
+├── global-setup.ts
+├── global-teardown.ts
+├── helpers/
+├── .auth/
+│   └── user.json          # Estado de autenticação salvo pelo portal-setup
+└── portal/
+    ├── setup.ts            # Cria a sessão autenticada (roda antes de portal)
     ├── sign-in.spec.ts
+    ├── dashboard.spec.ts
+    ├── repos.spec.ts
+    ├── analysis.spec.ts
+    ├── analysis-questions.spec.ts
     └── {feature}.spec.ts
 ```
 
 ### Nomenclatura
 
-- Arquivos de teste: `kebab-case.spec.ts` (ex: `sign-in.spec.ts`, `user-profile.spec.ts`)
+- Arquivos de teste: `kebab-case.spec.ts` (ex: `sign-in.spec.ts`, `analysis.spec.ts`)
 - Descreva o que está testando no nome do arquivo, agrupando por feature
 
 ---
@@ -42,9 +48,6 @@ pnpm test:e2e
 
 # Rodar apenas portal
 pnpm test:e2e:portal
-
-# Rodar apenas backoffice
-pnpm test:e2e:backoffice
 
 # UI Mode — debugging interativo com time travel
 pnpm test:e2e:ui
@@ -61,6 +64,38 @@ npx playwright show-report
 # Rodar em modo debug (passo a passo)
 npx playwright test --debug
 ```
+
+---
+
+## Portas em Modo Test
+
+Os apps sobem em portas diferentes do desenvolvimento normal para evitar conflitos:
+
+| App | Porta Dev | Porta Test |
+|---|---|---|
+| `apps/api` | 4000 | 4001 |
+| `apps/portal` | 3000 | 3100 |
+
+O comando `dev:test` em cada app configura essas portas via variáveis de ambiente.
+
+---
+
+## Autenticação nos Testes
+
+O projeto usa **stored auth state** do Playwright. O projeto `portal-setup` roda primeiro e salva a sessão autenticada em `e2e/.auth/user.json`. Todos os testes do projeto `portal` reutilizam essa sessão via `storageState`.
+
+```ts
+// e2e/portal/setup.ts — exemplo de padrão
+import { test as setup } from '@playwright/test'
+
+setup('authenticate', async ({ page }) => {
+  await page.goto('/auth/sign-in')
+  // ...realiza login...
+  await page.context().storageState({ path: 'e2e/.auth/user.json' })
+})
+```
+
+Cada teste não precisa fazer login manualmente — a sessão já está disponível.
 
 ---
 
@@ -144,21 +179,6 @@ expect(text).toBe('Dashboard')
 
 Cada teste deve ser independente. Não dependa de estado deixado por testes anteriores.
 
-```ts
-// ✅ Cada teste configura seu próprio estado
-test('should display user profile', async ({ page }) => {
-  // Setup: navegar e logar
-  await page.goto('/auth/sign-in')
-  await page.getByLabel('Email').fill('user@example.com')
-  await page.getByLabel('Senha').fill('password123')
-  await page.getByRole('button', { name: 'Entrar' }).click()
-
-  // Test: verificar perfil
-  await page.goto('/profile')
-  await expect(page.getByText('user@example.com')).toBeVisible()
-})
-```
-
 ### 4. Use `test.describe` para agrupar
 
 ```ts
@@ -189,29 +209,6 @@ await page.waitForURL('/dashboard')
 await page.waitForTimeout(3000)
 ```
 
-### 6. Use `beforeEach` para setup repetitivo
-
-```ts
-test.describe('Dashboard', () => {
-  test.beforeEach(async ({ page }) => {
-    // Login antes de cada teste
-    await page.goto('/auth/sign-in')
-    await page.getByLabel('Email').fill('admin@example.com')
-    await page.getByLabel('Senha').fill('password123')
-    await page.getByRole('button', { name: 'Entrar' }).click()
-    await page.waitForURL('/dashboard')
-  })
-
-  test('should display stats', async ({ page }) => {
-    await expect(page.getByText('Total de Usuários')).toBeVisible()
-  })
-
-  test('should display recent activity', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Atividade Recente' })).toBeVisible()
-  })
-})
-```
-
 ---
 
 ## Padrões Avançados
@@ -219,20 +216,19 @@ test.describe('Dashboard', () => {
 ### Interceptar e mockar API
 
 ```ts
-test('should display users from API', async ({ page }) => {
-  // Interceptar chamada à API
-  await page.route('**/api/users', (route) =>
+test('should display repos from API', async ({ page }) => {
+  await page.route('**/api/repos', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify([
-        { id: '1', name: 'João', email: 'joao@example.com' },
+        { id: '1', fullName: 'owner/repo', stars: 42 },
       ]),
     }),
   )
 
-  await page.goto('/users')
-  await expect(page.getByText('João')).toBeVisible()
+  await page.goto('/repos')
+  await expect(page.getByText('owner/repo')).toBeVisible()
 })
 ```
 
@@ -251,27 +247,10 @@ test('should redirect unauthenticated user to sign-in', async ({ page }) => {
 test('should validate required fields', async ({ page }) => {
   await page.goto('/auth/sign-up')
 
-  // Submit sem preencher
   await page.getByRole('button', { name: 'Criar Conta' }).click()
 
-  // Verificar mensagens de erro
   await expect(page.getByText('Email é obrigatório')).toBeVisible()
   await expect(page.getByText('Senha é obrigatória')).toBeVisible()
-})
-```
-
-### Testar responsividade
-
-```ts
-test('should show mobile menu on small screens', async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 667 })
-  await page.goto('/')
-
-  await expect(page.getByRole('button', { name: 'Menu' })).toBeVisible()
-  await expect(page.getByRole('navigation')).not.toBeVisible()
-
-  await page.getByRole('button', { name: 'Menu' }).click()
-  await expect(page.getByRole('navigation')).toBeVisible()
 })
 ```
 
@@ -337,11 +316,10 @@ A configuração está em `playwright.config.ts` na raiz do monorepo. Principais
 
 ### Web Servers
 
-O Playwright inicia automaticamente 3 servers antes dos testes:
+O Playwright inicia automaticamente 2 servers antes dos testes:
 
-1. **API** (`@repo/api`) — `http://localhost:4000`
-2. **Portal** (`@repo/portal`) — `http://localhost:3000`
-3. **Backoffice** (`@repo/backoffice`) — `http://localhost:3001`
+1. **API** (`@repo/api dev:test`) — `http://localhost:4001`
+2. **Portal** (`@repo/portal dev:test`) — `http://localhost:3100`
 
 Em desenvolvimento local, se os servers já estiverem rodando, o Playwright os reutiliza (`reuseExistingServer: true`).
 
