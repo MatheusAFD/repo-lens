@@ -27,7 +27,7 @@ describe('PromptBuilderService', () => {
         'update_plan',
         'recommendations',
       ] as const
-      const prompt = service.buildSystemPrompt([...sections])
+      const prompt = service.buildSystemPrompt([...sections], false)
 
       for (const section of sections) {
         expect(prompt).toContain(section)
@@ -35,14 +35,14 @@ describe('PromptBuilderService', () => {
     })
 
     it('contains BEGIN_SECTION and END_SECTION marker patterns', () => {
-      const prompt = service.buildSystemPrompt(['executive_summary', 'security'])
+      const prompt = service.buildSystemPrompt(['executive_summary', 'security'], false)
 
       expect(prompt).toContain('##BEGIN_SECTION:')
       expect(prompt).toContain('##END_SECTION:')
     })
 
     it('only includes requested sections — omits others', () => {
-      const prompt = service.buildSystemPrompt(['executive_summary', 'security'])
+      const prompt = service.buildSystemPrompt(['executive_summary', 'security'], false)
 
       expect(prompt).toContain('executive_summary')
       expect(prompt).toContain('security')
@@ -51,13 +51,13 @@ describe('PromptBuilderService', () => {
     })
 
     it('mentions correct section count', () => {
-      const prompt = service.buildSystemPrompt(['executive_summary', 'security'])
+      const prompt = service.buildSystemPrompt(['executive_summary', 'security'], false)
 
       expect(prompt).toContain('2')
     })
 
     it('includes code_metrics shape when requested', () => {
-      const prompt = service.buildSystemPrompt(['code_metrics'])
+      const prompt = service.buildSystemPrompt(['code_metrics'], false)
 
       expect(prompt).toContain('code_metrics')
       expect(prompt).toContain('totalFiles')
@@ -66,7 +66,7 @@ describe('PromptBuilderService', () => {
     })
 
     it('includes fun_facts shape when requested', () => {
-      const prompt = service.buildSystemPrompt(['fun_facts'])
+      const prompt = service.buildSystemPrompt(['fun_facts'], false)
 
       expect(prompt).toContain('fun_facts')
       expect(prompt).toContain('facts')

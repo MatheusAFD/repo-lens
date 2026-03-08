@@ -93,6 +93,16 @@ describe('AnalysisService', () => {
       }
       mockReposService.getRepo.mockResolvedValue([null, mockRepo])
 
+      mockDb.select = jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            orderBy: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      })
+
       mockDb.insert = jest.fn().mockReturnValue({
         values: jest.fn().mockReturnValue({
           returning: jest.fn().mockResolvedValue([{ analysisId: 'analysis-1' }]),
@@ -117,6 +127,15 @@ describe('AnalysisService', () => {
     it('calls buildSystemPrompt with provided sections subset', async () => {
       const mockRepo = { id: 'repo-1', owner: 'owner', name: 'repo', userId: 'user-1' }
       mockReposService.getRepo.mockResolvedValue([null, mockRepo])
+      mockDb.select = jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            orderBy: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      })
       mockDb.insert = jest.fn().mockReturnValue({
         values: jest.fn().mockReturnValue({
           returning: jest.fn().mockResolvedValue([{ analysisId: 'analysis-1' }]),
@@ -130,15 +149,24 @@ describe('AnalysisService', () => {
 
       await new Promise((r) => setTimeout(r, 500))
 
-      expect(mockPromptBuilder.buildSystemPrompt).toHaveBeenCalledWith([
-        'executive_summary',
-        'security',
-      ])
+      expect(mockPromptBuilder.buildSystemPrompt).toHaveBeenCalledWith(
+        ['executive_summary', 'security'],
+        false,
+      )
     })
 
     it('passes customContext to buildUserPrompt', async () => {
       const mockRepo = { id: 'repo-1', owner: 'owner', name: 'repo', userId: 'user-1' }
       mockReposService.getRepo.mockResolvedValue([null, mockRepo])
+      mockDb.select = jest.fn().mockReturnValue({
+        from: jest.fn().mockReturnValue({
+          where: jest.fn().mockReturnValue({
+            orderBy: jest.fn().mockReturnValue({
+              limit: jest.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      })
       mockDb.insert = jest.fn().mockReturnValue({
         values: jest.fn().mockReturnValue({
           returning: jest.fn().mockResolvedValue([{ analysisId: 'analysis-1' }]),
@@ -156,6 +184,7 @@ describe('AnalysisService', () => {
         expect.objectContaining({ owner: 'owner', name: 'repo' }),
         expect.any(Array),
         'B2B SaaS context',
+        undefined,
       )
     })
   })
