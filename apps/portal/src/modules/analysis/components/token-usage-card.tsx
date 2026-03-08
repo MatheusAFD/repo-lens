@@ -12,7 +12,7 @@ export function TokenUsageCard({ inputTokens, outputTokens }: TokenUsageCardProp
     (inputTokens / 1_000_000) * INPUT_COST_PER_MTOK +
     (outputTokens / 1_000_000) * OUTPUT_COST_PER_MTOK
 
-  const formattedCost = estimatedCost < 0.01 ? `< $0.01` : `$${estimatedCost.toFixed(3)}`
+  const formattedCost = estimatedCost < 0.01 ? '< $0.01' : `$${estimatedCost.toFixed(3)}`
 
   return (
     <div className="flex items-center gap-4 text-xs text-muted-foreground px-1">

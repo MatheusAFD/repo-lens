@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common'
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth'
+// biome-ignore lint/style/useImportType: <explanation>
 import { GithubService } from './github.service'
 
 @Controller('github')

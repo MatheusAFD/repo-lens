@@ -26,7 +26,9 @@ export const auth = betterAuth({
   },
   socialProviders: {
     github: {
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
       clientId: process.env.GITHUB_CLIENT_ID!,
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       scope: ['read:user', 'public_repo'],
     },

@@ -31,7 +31,13 @@ export function FunFactsSection({ data, isStreaming }: FunFactsSectionProps) {
 
         <ul className="space-y-3">
           {data.facts.map((fact, index) => (
-            <li key={`fact-${index}`} className="flex items-start gap-3 text-sm text-foreground/90">
+            <li
+              key={`fact-${
+                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                index
+              }`}
+              className="flex items-start gap-3 text-sm text-foreground/90"
+            >
               <span className="shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold">
                 {index + 1}
               </span>
