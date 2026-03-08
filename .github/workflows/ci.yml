@@ -101,18 +101,18 @@ jobs:
           GH_OAUTH_CLIENT_ID: ${{ secrets.GH_OAUTH_CLIENT_ID }}
           GH_OAUTH_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
         run: |
-          cat > apps/api/.env.test << EOF
-          PORT=4001
-          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/repo_lens_test
-          BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-          BETTER_AUTH_URL=http://localhost:4001
-          ALLOWED_ORIGINS=http://localhost:3100
-          NODE_ENV=test
-          ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-          ANTHROPIC_MOCK=true
-          GITHUB_CLIENT_ID=${GH_OAUTH_CLIENT_ID}
-          GITHUB_CLIENT_SECRET=${GH_OAUTH_CLIENT_SECRET}
-          EOF
+          {
+            echo "PORT=4001"
+            echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/repo_lens_test"
+            echo "BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}"
+            echo "BETTER_AUTH_URL=http://localhost:4001"
+            echo "ALLOWED_ORIGINS=http://localhost:3100"
+            echo "NODE_ENV=test"
+            echo "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}"
+            echo "ANTHROPIC_MOCK=true"
+            echo "GITHUB_CLIENT_ID=${GH_OAUTH_CLIENT_ID}"
+            echo "GITHUB_CLIENT_SECRET=${GH_OAUTH_CLIENT_SECRET}"
+          } > apps/api/.env.test
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

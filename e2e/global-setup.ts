@@ -5,14 +5,18 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const TEST_DB_URL = 'postgresql://postgres:postgres@localhost:5433/repo_lens_test'
+const TEST_DB_URL =
+  process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5433/repo_lens_test'
 const ROOT = path.resolve(__dirname, '..')
+const IS_CI = !!process.env.CI
 
 export default async function globalSetup() {
-  execSync('docker compose -f docker-compose.test.yml up -d --wait', {
-    stdio: 'inherit',
-    cwd: ROOT,
-  })
+  if (!IS_CI) {
+    execSync('docker compose -f docker-compose.test.yml up -d --wait', {
+      stdio: 'inherit',
+      cwd: ROOT,
+    })
+  }
 
   const authDir = path.join(__dirname, '.auth')
   if (!fs.existsSync(authDir)) {
