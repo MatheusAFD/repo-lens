@@ -1,7 +1,7 @@
 import {
   RECOMMENDED_SECTIONS,
   SECTION_META,
-  SECTION_ORDER,
+  SELECTABLE_SECTIONS,
 } from '@/common/constants/analysis-sections'
 import type { AnalysisSectionType } from '@repo/shared'
 import { Badge } from '@repo/ui/components/badge'
@@ -44,7 +44,7 @@ export function StartAnalysisDialog({
   }
 
   function handleConfirm() {
-    const sections = SECTION_ORDER.filter((s) => selectedSections.has(s))
+    const sections = SELECTABLE_SECTIONS.filter((s) => selectedSections.has(s))
     onConfirm({
       sections,
       customContext: customContext.trim() || undefined,
@@ -66,7 +66,7 @@ export function StartAnalysisDialog({
               Sections to generate
             </p>
             <div className="space-y-2">
-              {SECTION_ORDER.map((section) => {
+              {SELECTABLE_SECTIONS.map((section) => {
                 const meta = SECTION_META[section]
                 const isRecommended = RECOMMENDED_SECTIONS.includes(section)
                 const checked = selectedSections.has(section)

@@ -84,6 +84,18 @@ export const TECHNICAL_SECTIONS: AnalysisSectionType[] = [
   'code_metrics',
 ]
 
+export const SELECTABLE_SECTIONS = [
+  'executive_summary',
+  'tech_stack',
+  'architecture',
+  'security',
+  'dependencies',
+  'update_plan',
+  'recommendations',
+  'code_metrics',
+  'fun_facts',
+] as const satisfies AnalysisSectionType[]
+
 export const RECOMMENDED_SECTIONS: AnalysisSectionType[] = [
   'executive_summary',
   'security',
