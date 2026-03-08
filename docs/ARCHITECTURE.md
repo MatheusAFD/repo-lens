@@ -7,56 +7,56 @@ This project follows a **modular monolith architecture** with clear separation o
 ```
 repo-ai-analyzer/
 ├── apps/
-│   ├── portal/          # TanStack Start — portal do usuário (porta 3000)
-│   └── api/             # NestJS — API REST (porta 4000)
+│   ├── portal/          # TanStack Start — end-user portal (port 3000)
+│   └── api/             # NestJS — REST API (port 4000)
 ├── packages/
-│   ├── ui/              # Componentes compartilhados (Shadcn + Radix)
-│   ├── auth/            # Configuração Better Auth compartilhada
-│   ├── shared/          # Tipos, constantes e utilitários
+│   ├── ui/              # Shared components (Shadcn + Radix)
+│   ├── auth/            # Shared Better Auth configuration
+│   ├── shared/          # Types, constants and utilities
 │   └── typescript-config/
 └── docs/
 ```
 
 ## Core Principles
 
-1. **Feature Modules**: Cada feature é autocontida em `modules/` com seus componentes, schemas, hooks e server functions
-2. **Service Layer**: Comunicação HTTP abstraída em classes de serviço com injeção de dependência
-3. **Go-style Error Handling**: Tuplas `[Error | null, Data | null]` em toda a camada de serviço
-4. **Type Safety**: TypeScript estrito com validação runtime via Zod
-5. **Server Functions**: TanStack Start server functions para SSR data fetching
+1. **Feature Modules**: Each feature is self-contained in `modules/` with its own components, schemas, hooks and server functions
+2. **Service Layer**: HTTP communication abstracted into service classes with dependency injection
+3. **Go-style Error Handling**: `[Error | null, Data | null]` tuples throughout the service layer
+4. **Type Safety**: Strict TypeScript with runtime validation via Zod
+5. **Server Functions**: TanStack Start server functions for SSR data fetching
 
-## Estrutura de Módulo (Portal/Backoffice)
+## Module Structure (Portal)
 
 ```
 src/
 ├── common/
-│   ├── constants/       # Constantes (http-status-code, times, etc.)
-│   └── utils/           # Utilitários puros (logger, etc.)
+│   ├── constants/       # Constants (http-status-code, times, etc.)
+│   └── utils/           # Pure utilities (logger, etc.)
 ├── lib/
-│   └── auth-client.ts   # Better Auth client configurado
+│   └── auth-client.ts   # Configured Better Auth client
 ├── middleware/
-│   └── auth.ts          # Middleware de autenticação SSR
+│   └── auth.ts          # SSR auth middleware
 ├── modules/
 │   └── {feature}/
-│       ├── components/  # Componentes da feature
-│       ├── hooks/       # Hooks específicos
-│       ├── schemas/     # Schemas Zod
-│       ├── domain/      # Tipos de domínio
+│       ├── components/  # Feature components
+│       ├── hooks/       # Feature-specific hooks
+│       ├── schemas/     # Zod schemas
+│       ├── domain/      # Domain types
 │       └── server/      # Server functions (TanStack Start)
 ├── services/
 │   ├── adapters/        # FetchHttpClientAdapter
-│   ├── factories/       # httpHttpClientFactory
+│   ├── factories/       # httpClientFactory
 │   ├── error.ts         # ApiError, AuthenticationError, ForbiddenError
 │   └── http/
 │       └── {entity}/
-│           ├── {entity}-service.ts      # Classe de serviço
-│           ├── use-{entity}-service.ts   # Hooks TanStack Query
-│           └── index.ts                  # Instância do serviço
+│           ├── {entity}-service.ts      # Service class
+│           ├── use-{entity}-service.ts   # TanStack Query hooks
+│           └── index.ts                  # Service instance
 ├── types/
 │   └── http.ts          # HttpClient, RequestConfig, Response
-├── env.ts               # Variáveis de ambiente tipadas
+├── env.ts               # Typed environment variables
 ├── routes/              # File-based routing
-└── router.tsx           # Configuração do TanStack Router
+└── router.tsx           # TanStack Router configuration
 ```
 
 ## Service Layer Pattern
@@ -158,9 +158,9 @@ export function useRevokeSession() {
 }
 ```
 
-### Exemplos de Requisições HTTP
+### HTTP Request Examples
 
-#### GET — Listar recursos
+#### GET — List resources
 
 ```ts
 async listSessions(): Promise<[Error | null, SessionItem[] | null]> {
@@ -174,7 +174,7 @@ async listSessions(): Promise<[Error | null, SessionItem[] | null]> {
 }
 ```
 
-#### GET — Buscar por ID
+#### GET — Fetch by ID
 
 ```ts
 async getById(id: string): Promise<[Error | null, User | null]> {
@@ -188,7 +188,7 @@ async getById(id: string): Promise<[Error | null, User | null]> {
 }
 ```
 
-#### POST — Criar recurso
+#### POST — Create resource
 
 ```ts
 async create(data: CreateUserRequest): Promise<[Error | null, User | null]> {
@@ -203,7 +203,7 @@ async create(data: CreateUserRequest): Promise<[Error | null, User | null]> {
 }
 ```
 
-#### PUT/PATCH — Atualizar recurso
+#### PUT/PATCH — Update resource
 
 ```ts
 async update(
@@ -221,7 +221,7 @@ async update(
 }
 ```
 
-#### DELETE — Remover recurso
+#### DELETE — Remove resource
 
 ```ts
 async delete(id: string): Promise<[Error | null, { success: boolean } | null]> {
@@ -235,7 +235,7 @@ async delete(id: string): Promise<[Error | null, { success: boolean } | null]> {
 }
 ```
 
-#### GET com Query Params
+#### GET with Query Params
 
 ```ts
 async search(
@@ -257,7 +257,7 @@ async search(
 }
 ```
 
-#### POST com FormData (Upload)
+#### POST with FormData (Upload)
 
 ```ts
 async uploadAvatar(
@@ -270,7 +270,7 @@ async uploadAvatar(
   const [error, response] = await this.httpClient.request<{ url: string }>({
     url: `/users/${userId}/avatar`,
     method: 'POST',
-    body: formData // FetchHttpClientAdapter detecta FormData automaticamente
+    body: formData
   })
 
   if (error || !response) return [error, null]
@@ -295,9 +295,9 @@ const { data, isLoading } = useQuery({
 
 **Rules:**
 
-- Use TanStack Query para todo dado vindo do servidor
-- Use `useState` para estado simples de componente
-- Use Context + hooks para estado scoped por feature
+- Use TanStack Query for all server-fetched data
+- Use `useState` for simple component-local state
+- Use Context + hooks for feature-scoped state
 
 ## Protected Routes
 
@@ -320,7 +320,7 @@ export const authMiddleware = createMiddleware().server(async ({ next }) => {
 })
 ```
 
-### Route Layout protegido
+### Protected Route Layout
 
 ```ts
 export const Route = createFileRoute('/_authed')({
@@ -350,13 +350,13 @@ export class ApiError extends Error {
 
 export class AuthenticationError extends ApiError {
   constructor() {
-    super({ status: 401, code: 401, message: 'Usuário não autorizado', error: true })
+    super({ status: 401, code: 401, message: 'Unauthorized', error: true })
   }
 }
 
 export class ForbiddenError extends ApiError {
   constructor() {
-    super({ status: 403, code: 403, message: 'Acesso proibido', error: true })
+    super({ status: 403, code: 403, message: 'Forbidden', error: true })
   }
 }
 ```
@@ -373,13 +373,13 @@ if (error.status === HttpStatusCodes.UNAUTHORIZED) {
 
 ## E2E Testing (Playwright)
 
-Testes end-to-end ficam na pasta `e2e/` na raiz do monorepo, organizados por app (apenas `portal/`). A configuração central está em `playwright.config.ts`.
+End-to-end tests live in the `e2e/` directory at the monorepo root, organized by app (only `portal/`). The central configuration is in `playwright.config.ts`.
 
-Para detalhes completos sobre como escrever testes, boas práticas, e padrões avançados, consulte [`docs/TESTING.md`](TESTING.md).
+For full details on writing tests, best practices, and advanced patterns, see [`docs/TESTING.md`](TESTING.md).
 
-## Backend (NestJS) — Convenções
+## Backend (NestJS) — Conventions
 
-### Módulo com RBAC
+### Module with RBAC
 
 ```ts
 @Controller('sessions')
@@ -394,16 +394,16 @@ export class SessionsController {
 }
 ```
 
-### Decorators disponíveis (@thallesp/nestjs-better-auth)
+### Available decorators (@thallesp/nestjs-better-auth)
 
-- `@AllowAnonymous()` — Rota pública
-- `@Roles(['backoffice'])` — Requer role específica
-- `@Session()` — Injetar sessão do usuário
-- `@OptionalAuth()` — Autenticação opcional
+- `@AllowAnonymous()` — Public route
+- `@Roles(['admin'])` — Requires specific role
+- `@Session()` — Inject user session
+- `@OptionalAuth()` — Optional authentication
 
-### Rotas públicas vs protegidas
+### Public vs protected routes
 
-Todas as rotas são protegidas por padrão (AuthGuard global). Para tornar pública:
+All routes are protected by default (global AuthGuard). To make a route public:
 
 ```ts
 @AllowAnonymous()

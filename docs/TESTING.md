@@ -1,19 +1,19 @@
-# Testing — Guia de Testes E2E com Playwright
+# Testing — E2E Tests Guide with Playwright
 
-## Visão Geral
+## Overview
 
-O monorepo usa **Playwright** para testes E2E do frontend (Portal). A configuração está na raiz do projeto em `playwright.config.ts` com três projetos: `portal-setup`, `portal` e `backoffice` (reservado para uso futuro).
+The monorepo uses **Playwright** for E2E tests of the frontend (Portal). The configuration is at the project root in `playwright.config.ts` with three projects: `portal-setup`, `portal`, and `backoffice` (reserved for future use).
 
-| Projeto | App | Base URL | Diretório de Testes |
+| Project | App | Base URL | Test Directory |
 |---|---|---|---|
 | `portal-setup` | `apps/portal` | `http://localhost:3100` | `e2e/portal/setup.ts` |
 | `portal` | `apps/portal` | `http://localhost:3100` | `e2e/portal/` |
 
-Os dois dev servers (API em modo test e Portal em modo test) são iniciados automaticamente via `webServer` do Playwright.
+Both dev servers (API in test mode and Portal in test mode) are started automatically via Playwright's `webServer`.
 
 ---
 
-## Estrutura de Diretórios
+## Directory Structure
 
 ```
 e2e/
@@ -22,9 +22,9 @@ e2e/
 ├── global-teardown.ts
 ├── helpers/
 ├── .auth/
-│   └── user.json          # Estado de autenticação salvo pelo portal-setup
+│   └── user.json          # Auth state saved by portal-setup
 └── portal/
-    ├── setup.ts            # Cria a sessão autenticada (roda antes de portal)
+    ├── setup.ts            # Creates the authenticated session (runs before portal)
     ├── sign-in.spec.ts
     ├── dashboard.spec.ts
     ├── repos.spec.ts
@@ -33,75 +33,75 @@ e2e/
     └── {feature}.spec.ts
 ```
 
-### Nomenclatura
+### Naming
 
-- Arquivos de teste: `kebab-case.spec.ts` (ex: `sign-in.spec.ts`, `analysis.spec.ts`)
-- Descreva o que está testando no nome do arquivo, agrupando por feature
+- Test files: `kebab-case.spec.ts` (e.g. `sign-in.spec.ts`, `analysis.spec.ts`)
+- Name files after the feature being tested
 
 ---
 
-## Comandos
+## Commands
 
 ```bash
-# Rodar todos os testes E2E
+# Run all E2E tests
 pnpm test:e2e
 
-# Rodar apenas portal
+# Run portal tests only
 pnpm test:e2e:portal
 
-# UI Mode — debugging interativo com time travel
+# UI Mode — interactive debugging with time travel
 pnpm test:e2e:ui
 
-# Rodar teste específico
+# Run a specific test file
 npx playwright test e2e/portal/sign-in.spec.ts
 
-# Com browser visível
+# Run with visible browser
 npx playwright test --headed
 
-# Ver relatório HTML após execução
+# View HTML report after run
 npx playwright show-report
 
-# Rodar em modo debug (passo a passo)
+# Run in debug mode (step by step)
 npx playwright test --debug
 ```
 
 ---
 
-## Portas em Modo Test
+## Test Mode Ports
 
-Os apps sobem em portas diferentes do desenvolvimento normal para evitar conflitos:
+Apps run on different ports than normal development to avoid conflicts:
 
-| App | Porta Dev | Porta Test |
+| App | Dev Port | Test Port |
 |---|---|---|
 | `apps/api` | 4000 | 4001 |
 | `apps/portal` | 3000 | 3100 |
 
-O comando `dev:test` em cada app configura essas portas via variáveis de ambiente.
+The `dev:test` command in each app configures these ports via environment variables.
 
 ---
 
-## Autenticação nos Testes
+## Authentication in Tests
 
-O projeto usa **stored auth state** do Playwright. O projeto `portal-setup` roda primeiro e salva a sessão autenticada em `e2e/.auth/user.json`. Todos os testes do projeto `portal` reutilizam essa sessão via `storageState`.
+The project uses Playwright's **stored auth state**. The `portal-setup` project runs first and saves the authenticated session to `e2e/.auth/user.json`. All `portal` project tests reuse this session via `storageState`.
 
 ```ts
-// e2e/portal/setup.ts — exemplo de padrão
+// e2e/portal/setup.ts — pattern example
 import { test as setup } from '@playwright/test'
 
 setup('authenticate', async ({ page }) => {
   await page.goto('/auth/sign-in')
-  // ...realiza login...
+  // ...perform login...
   await page.context().storageState({ path: 'e2e/.auth/user.json' })
 })
 ```
 
-Cada teste não precisa fazer login manualmente — a sessão já está disponível.
+Each test does not need to log in manually — the session is already available.
 
 ---
 
-## Escrevendo Testes
+## Writing Tests
 
-### Estrutura básica
+### Basic structure
 
 ```ts
 import { test, expect } from '@playwright/test'
@@ -111,8 +111,8 @@ test.describe('Sign In', () => {
     await page.goto('/auth/sign-in')
 
     await page.getByLabel('Email').fill('user@example.com')
-    await page.getByLabel('Senha').fill('password123')
-    await page.getByRole('button', { name: 'Entrar' }).click()
+    await page.getByLabel('Password').fill('password123')
+    await page.getByRole('button', { name: 'Sign In' }).click()
 
     await expect(page).toHaveURL('/dashboard')
     await expect(page.getByRole('heading')).toHaveText('Dashboard')
@@ -122,64 +122,64 @@ test.describe('Sign In', () => {
     await page.goto('/auth/sign-in')
 
     await page.getByLabel('Email').fill('wrong@example.com')
-    await page.getByLabel('Senha').fill('wrongpassword')
-    await page.getByRole('button', { name: 'Entrar' }).click()
+    await page.getByLabel('Password').fill('wrongpassword')
+    await page.getByRole('button', { name: 'Sign In' }).click()
 
-    await expect(page.getByText('Credenciais inválidas')).toBeVisible()
+    await expect(page.getByText('Invalid credentials')).toBeVisible()
   })
 })
 ```
 
 ---
 
-## Boas Práticas
+## Best Practices
 
-### 1. Use locators acessíveis
+### 1. Use accessible locators
 
-Prefira locators que refletem como o usuário interage com a página:
+Prefer locators that reflect how the user interacts with the page:
 
 ```ts
-// ✅ Correto — locators acessíveis (resistentes a mudanças de UI)
-page.getByRole('button', { name: 'Salvar' })
+// ✅ Correct — accessible locators (resilient to UI changes)
+page.getByRole('button', { name: 'Save' })
 page.getByLabel('Email')
-page.getByText('Bem-vindo')
-page.getByPlaceholder('Digite seu nome')
-page.getByTestId('user-avatar')  // quando não há alternativa acessível
+page.getByText('Welcome')
+page.getByPlaceholder('Enter your name')
+page.getByTestId('user-avatar')  // when there is no accessible alternative
 
-// ❌ Incorreto — seletores frágeis
+// ❌ Incorrect — fragile selectors
 page.locator('.btn-primary')
 page.locator('#submit-btn')
 page.locator('div > form > button:nth-child(2)')
 ```
 
-**Ordem de preferência:**
-1. `getByRole()` — botões, links, headings, inputs
-2. `getByLabel()` — campos de formulário
-3. `getByText()` — texto visível
-4. `getByPlaceholder()` — inputs com placeholder
-5. `getByTestId()` — último recurso, adicionar `data-testid` no componente
+**Preference order:**
+1. `getByRole()` — buttons, links, headings, inputs
+2. `getByLabel()` — form fields
+3. `getByText()` — visible text
+4. `getByPlaceholder()` — inputs with placeholder
+5. `getByTestId()` — last resort, add `data-testid` to the component
 
 ### 2. Use web-first assertions
 
-Assertions do Playwright fazem auto-retry até o timeout. Nunca extraia valores manualmente.
+Playwright assertions auto-retry until timeout. Never extract values manually.
 
 ```ts
 // ✅ Web-first assertions (auto-retry, async)
 await expect(page.getByRole('heading')).toHaveText('Dashboard')
 await expect(page.getByRole('button')).toBeEnabled()
 await expect(page).toHaveURL('/dashboard')
-await expect(page.getByText('Carregando')).not.toBeVisible()
+await expect(page.getByText('Loading')).not.toBeVisible()
 
-// ❌ Assertions manuais (sem retry, flaky)
+// ❌ Manual assertions (no retry, flaky)
 const text = await page.textContent('h1')
 expect(text).toBe('Dashboard')
 ```
 
-### 3. Isole os testes
+### 3. Isolate tests
 
-Cada teste deve ser independente. Não dependa de estado deixado por testes anteriores.
+Each test must be independent. Do not depend on state left by previous tests.
 
-### 4. Use `test.describe` para agrupar
+### 4. Use `test.describe` to group
 
 ```ts
 test.describe('User Profile', () => {
@@ -194,26 +194,26 @@ test.describe('User Profile', () => {
 })
 ```
 
-### 5. Evite `waitForTimeout`
+### 5. Avoid `waitForTimeout`
 
-Nunca use waits fixos. Use locators e assertions que fazem auto-retry.
+Never use fixed waits. Use locators and assertions that auto-retry.
 
 ```ts
-// ✅ Espera inteligente via assertion
+// ✅ Smart wait via assertion
 await expect(page.getByRole('table')).toBeVisible()
 
-// ✅ Espera por navegação
+// ✅ Wait for navigation
 await page.waitForURL('/dashboard')
 
-// ❌ Wait fixo (flaky, lento)
+// ❌ Fixed wait (flaky, slow)
 await page.waitForTimeout(3000)
 ```
 
 ---
 
-## Padrões Avançados
+## Advanced Patterns
 
-### Interceptar e mockar API
+### Intercept and mock API
 
 ```ts
 test('should display repos from API', async ({ page }) => {
@@ -232,7 +232,7 @@ test('should display repos from API', async ({ page }) => {
 })
 ```
 
-### Testar navegação e redirects
+### Test navigation and redirects
 
 ```ts
 test('should redirect unauthenticated user to sign-in', async ({ page }) => {
@@ -241,16 +241,16 @@ test('should redirect unauthenticated user to sign-in', async ({ page }) => {
 })
 ```
 
-### Testar formulários com validação
+### Test forms with validation
 
 ```ts
 test('should validate required fields', async ({ page }) => {
   await page.goto('/auth/sign-up')
 
-  await page.getByRole('button', { name: 'Criar Conta' }).click()
+  await page.getByRole('button', { name: 'Create Account' }).click()
 
-  await expect(page.getByText('Email é obrigatório')).toBeVisible()
-  await expect(page.getByText('Senha é obrigatória')).toBeVisible()
+  await expect(page.getByText('Email is required')).toBeVisible()
+  await expect(page.getByText('Password is required')).toBeVisible()
 })
 ```
 
@@ -260,7 +260,7 @@ test('should validate required fields', async ({ page }) => {
 
 ### UI Mode
 
-O modo mais poderoso para debugging. Permite ver o teste rodando, inspecionar o DOM, e fazer time travel entre steps.
+The most powerful mode for debugging. Allows seeing the test run, inspecting the DOM, and time-traveling between steps.
 
 ```bash
 pnpm test:e2e:ui
@@ -268,7 +268,7 @@ pnpm test:e2e:ui
 
 ### Headed Mode
 
-Ver o navegador durante a execução:
+See the browser during execution:
 
 ```bash
 npx playwright test --headed
@@ -276,7 +276,7 @@ npx playwright test --headed
 
 ### Debug Mode
 
-Pausar em cada step e inspecionar:
+Pause at each step and inspect:
 
 ```bash
 npx playwright test --debug
@@ -284,48 +284,48 @@ npx playwright test --debug
 
 ### Trace Viewer
 
-Após falha, o Playwright gera traces automaticamente (em CI com retries). Para abrir:
+After a failure, Playwright generates traces automatically (in CI with retries). To open:
 
 ```bash
 npx playwright show-report
 ```
 
-### Adicionar pause no código
+### Add pause in code
 
 ```ts
 test('debug this', async ({ page }) => {
   await page.goto('/')
-  await page.pause()  // Abre o Playwright Inspector
+  await page.pause()  // Opens the Playwright Inspector
   // ...
 })
 ```
 
 ---
 
-## Configuração
+## Configuration
 
-A configuração está em `playwright.config.ts` na raiz do monorepo. Principais opções:
+The configuration is in `playwright.config.ts` at the monorepo root. Key options:
 
-| Opção | Valor | Descrição |
+| Option | Value | Description |
 |---|---|---|
-| `fullyParallel` | `true` | Testes rodam em paralelo |
-| `forbidOnly` | `!!process.env.CI` | Falha se `.only` estiver no CI |
-| `retries` | `2` em CI, `0` local | Retentativas automáticas |
-| `workers` | `1` em CI, auto local | Número de workers paralelos |
-| `reporter` | `'html'` | Relatório HTML |
+| `fullyParallel` | `true` | Tests run in parallel |
+| `forbidOnly` | `!!process.env.CI` | Fails if `.only` is present in CI |
+| `retries` | `2` in CI, `0` local | Automatic retries |
+| `workers` | `1` in CI, auto local | Number of parallel workers |
+| `reporter` | `'html'` | HTML report |
 
 ### Web Servers
 
-O Playwright inicia automaticamente 2 servers antes dos testes:
+Playwright automatically starts 2 servers before the tests:
 
 1. **API** (`@repo/api dev:test`) — `http://localhost:4001`
 2. **Portal** (`@repo/portal dev:test`) — `http://localhost:3100`
 
-Em desenvolvimento local, se os servers já estiverem rodando, o Playwright os reutiliza (`reuseExistingServer: true`).
+In local development, if the servers are already running, Playwright reuses them (`reuseExistingServer: true`).
 
 ---
 
-## Referências
+## References
 
 - [Playwright — Getting Started](https://playwright.dev/docs/intro)
 - [Playwright — Best Practices](https://playwright.dev/docs/best-practices)
