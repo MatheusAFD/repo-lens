@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
 jobs:
   lint:
     name: Lint & Format
@@ -17,6 +21,14 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: node_modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm format:check
@@ -31,6 +43,14 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: node_modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
@@ -44,6 +64,14 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: node_modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @repo/api test
 
@@ -58,8 +86,24 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: node_modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - name: Cache build outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/*/dist
+            apps/*/.output
+            packages/*/dist
+          key: build-${{ runner.os }}-${{ github.sha }}
 
   e2e:
     name: E2E Tests
@@ -92,7 +136,28 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Restore node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: node_modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
+      - name: Restore build outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/*/dist
+            apps/*/.output
+            packages/*/dist
+          key: build-${{ runner.os }}-${{ github.sha }}
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package.json') }}
       - run: pnpm exec playwright install --with-deps chromium
       - name: Create .env.test
         env:
