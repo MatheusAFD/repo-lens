@@ -4,13 +4,9 @@ import Anthropic from '@anthropic-ai/sdk'
 import { eq, and, desc } from 'drizzle-orm'
 import { db } from '../../config/database'
 import { analysis, analysisQuestion, type repository } from '../../config/database/schema'
-// biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
 import { GithubService } from '../github/github.service'
-// biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
 import { ReposService } from '../repos/repos.service'
-// biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
 import { ContextBuilderService } from './context-builder.service'
-// biome-ignore lint/style/useImportType: value import required for NestJS emitDecoratorMetadata
 import { PromptBuilderService } from './prompt-builder.service'
 import type {
   AnalysisResult,

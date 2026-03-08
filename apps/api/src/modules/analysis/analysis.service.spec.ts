@@ -20,6 +20,10 @@ jest.mock('@anthropic-ai/sdk', () => ({
 }))
 
 import { AnalysisService } from './analysis.service'
+import { GithubService } from '../github/github.service'
+import { ReposService } from '../repos/repos.service'
+import { ContextBuilderService } from './context-builder.service'
+import { PromptBuilderService } from './prompt-builder.service'
 import { db } from '../../config/database'
 
 const mockDb = db as jest.Mocked<typeof db>
@@ -53,10 +57,10 @@ describe('AnalysisService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnalysisService,
-        { provide: 'GithubService', useValue: mockGithubService },
-        { provide: 'ReposService', useValue: mockReposService },
-        { provide: 'ContextBuilderService', useValue: mockContextBuilder },
-        { provide: 'PromptBuilderService', useValue: mockPromptBuilder },
+        { provide: GithubService, useValue: mockGithubService },
+        { provide: ReposService, useValue: mockReposService },
+        { provide: ContextBuilderService, useValue: mockContextBuilder },
+        { provide: PromptBuilderService, useValue: mockPromptBuilder },
       ],
     }).compile()
 
