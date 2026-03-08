@@ -68,7 +68,6 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/repo_lens_test
       POSTGRES_PASSWORD: postgres
-      BETTER_AUTH_SECRET: ci-test-secret-at-least-32-characters-long
       BETTER_AUTH_URL: http://localhost:4001
       ALLOWED_ORIGINS: http://localhost:3100
       ANTHROPIC_MOCK: 'true'
@@ -95,6 +94,25 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Create .env.test
+        env:
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_OAUTH_CLIENT_ID: ${{ secrets.GH_OAUTH_CLIENT_ID }}
+          GH_OAUTH_CLIENT_SECRET: ${{ secrets.GH_OAUTH_CLIENT_SECRET }}
+        run: |
+          cat > apps/api/.env.test << EOF
+          PORT=4001
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/repo_lens_test
+          BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+          BETTER_AUTH_URL=http://localhost:4001
+          ALLOWED_ORIGINS=http://localhost:3100
+          NODE_ENV=test
+          ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+          ANTHROPIC_MOCK=true
+          GITHUB_CLIENT_ID=${GH_OAUTH_CLIENT_ID}
+          GITHUB_CLIENT_SECRET=${GH_OAUTH_CLIENT_SECRET}
+          EOF
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
