@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ta
 import { Link } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { Check, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useAnalysis, useStartAnalysis } from '../hooks/use-analysis'
@@ -24,6 +25,7 @@ import type { ViewMode } from '../hooks/use-view-mode'
 import { useViewMode } from '../hooks/use-view-mode'
 import type { StartAnalysisFormRequest } from '../schemas/start-analysis.schema'
 import { AnalysisProgress } from './analysis-progress'
+import { AnalysisProgressSection } from './analysis-progress-section'
 import { AnalysisQuestions } from './analysis-questions'
 import { ArchitectureSection } from './architecture-section'
 import { CodeMetricsSection } from './code-metrics-section'
@@ -82,8 +84,23 @@ function SectionTabs({
 
   const tabsListRef = useRef<HTMLDivElement>(null)
   const triggerRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
 
   const unread = useUnreadSections(completedSections, currentActiveTab as AnalysisSectionType)
+
+  const updateScrollState = useCallback(() => {
+    const el = tabsListRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 4)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }, [])
+
+  const scrollBy = useCallback((direction: 'left' | 'right') => {
+    const el = tabsListRef.current
+    if (!el) return
+    el.scrollBy({ left: direction === 'left' ? -160 : 160, behavior: 'smooth' })
+  }, [])
 
   const scrollTabIntoView = useCallback((section: string) => {
     const container = tabsListRef.current
@@ -95,6 +112,19 @@ function SectionTabs({
     const targetScroll = container.scrollLeft + elCenter - containerRect.width / 2
     container.scrollTo({ left: targetScroll, behavior: 'smooth' })
   }, [])
+
+  useEffect(() => {
+    const el = tabsListRef.current
+    if (!el) return
+    el.addEventListener('scroll', updateScrollState, { passive: true })
+    const observer = new ResizeObserver(updateScrollState)
+    observer.observe(el)
+    updateScrollState()
+    return () => {
+      el.removeEventListener('scroll', updateScrollState)
+      observer.disconnect()
+    }
+  }, [updateScrollState])
 
   useEffect(() => {
     scrollTabIntoView(currentActiveTab)
@@ -144,65 +174,100 @@ function SectionTabs({
         scrollTabIntoView(v)
       }}
     >
-      <div
-        ref={tabsListRef}
-        className="overflow-x-auto overflow-y-hidden [mask-image:linear-gradient(to_right,transparent,black_24px,black_calc(100%-24px),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        <TabsList className="inline-flex! h-auto p-1 gap-0.5 rounded-xl bg-muted w-max">
-          {SECTION_ORDER.map((section) => {
-            const available = availableTabs.includes(section)
-            const meta = SECTION_META[section]
-            const isActiveStreaming = isStreaming && currentStreamingSection === section
-            const isUnread = unread.has(section)
-            const isHiddenByFilter = !filteredOrder.includes(section)
+      <div className="relative flex items-center">
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => scrollBy('left')}
+            className="absolute -left-4 z-10 flex items-center justify-center w-10 h-full bg-linear-to-r from-background via-background/80 to-transparent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <ChevronLeft className="size-5 shrink-0" />
+          </button>
+        )}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => scrollBy('right')}
+            className="absolute -right-4 z-10 flex items-center justify-center w-10 h-full bg-linear-to-l from-background via-background/80 to-transparent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <ChevronRight className="size-5 shrink-0" />
+          </button>
+        )}
+        <div
+          ref={tabsListRef}
+          className="overflow-x-auto overflow-y-hidden mask-[linear-gradient(to_right,transparent,black_24px,black_calc(100%-24px),transparent)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <TabsList className="inline-flex! h-auto p-1 gap-0.5 rounded-xl bg-muted w-max">
+            {SECTION_ORDER.map((section) => {
+              const available = availableTabs.includes(section)
+              const meta = SECTION_META[section]
+              const isActiveStreaming = isStreaming && currentStreamingSection === section
+              const isUnread = unread.has(section)
+              const isHiddenByFilter = !filteredOrder.includes(section)
 
-            if (isHiddenByFilter) return null
+              if (isHiddenByFilter) return null
 
-            return (
-              <TabsTrigger
-                key={section}
-                value={section}
-                disabled={!available}
-                ref={(el) => {
-                  triggerRefs.current[section] = el
-                }}
-                className="relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg h-auto disabled:opacity-30 cursor-pointer data-[state=active]:cursor-default whitespace-nowrap"
-              >
-                <span className="[&_svg]:w-3.5 [&_svg]:h-3.5 shrink-0">
-                  {SECTION_ICONS[section]}
-                </span>
-                <span>{meta.label}</span>
-                {available && !isActiveStreaming && !isUnread && (
-                  <span className="flex items-center justify-center w-3.5 h-3.5 rounded-full bg-primary/15 shrink-0">
-                    <Check className="size-3.5 text-primary" strokeWidth={2} />
+              return (
+                <TabsTrigger
+                  key={section}
+                  value={section}
+                  disabled={!available}
+                  ref={(el) => {
+                    triggerRefs.current[section] = el
+                  }}
+                  className="relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg h-auto disabled:opacity-30 cursor-pointer data-[state=active]:cursor-default whitespace-nowrap"
+                >
+                  <span className="[&_svg]:w-3.5 [&_svg]:h-3.5 shrink-0">
+                    {SECTION_ICONS[section]}
                   </span>
-                )}
-                {isUnread && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                )}
-                {isActiveStreaming && (
-                  <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
-                )}
-              </TabsTrigger>
-            )
-          })}
+                  <span>{meta.label}</span>
+                  {available && !isActiveStreaming && !isUnread && (
+                    <span className="flex items-center justify-center w-3.5 h-3.5 rounded-full bg-primary/15 shrink-0">
+                      <Check className="size-3.5 text-primary" strokeWidth={2} />
+                    </span>
+                  )}
+                  {isUnread && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  )}
+                  {isActiveStreaming && (
+                    <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+                  )}
+                </TabsTrigger>
+              )
+            })}
 
-          {showQuestionsTab && (
-            <TabsTrigger
-              value="questions"
-              ref={(el) => {
-                triggerRefs.current.questions = el
-              }}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg h-auto cursor-pointer data-[state=active]:cursor-default whitespace-nowrap"
-            >
-              <ChatIcon />
-              <span>Ask</span>
-            </TabsTrigger>
-          )}
-        </TabsList>
+            {showQuestionsTab && (
+              <TabsTrigger
+                value="questions"
+                ref={(el) => {
+                  triggerRefs.current.questions = el
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg h-auto cursor-pointer data-[state=active]:cursor-default whitespace-nowrap"
+              >
+                <ChatIcon />
+                <span>Ask</span>
+              </TabsTrigger>
+            )}
+          </TabsList>
+        </div>
       </div>
 
       <div className="mt-4">
+        <TabsContent value="analysis_progress">
+          <motion.div
+            key="analysis_progress"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            {sections.analysis_progress && (
+              <AnalysisProgressSection
+                data={sections.analysis_progress}
+                isStreaming={isStreaming && !sections.executive_summary}
+              />
+            )}
+          </motion.div>
+        </TabsContent>
         <TabsContent value="executive_summary">
           <motion.div
             key="executive_summary"
@@ -442,7 +507,16 @@ export function AnalysisPage({ repo, initialAnalysisId }: AnalysisPageProps) {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold truncate">{repo.name}</h1>
-                {securityGrade && <HealthGradeBadge grade={securityGrade} size="sm" />}
+                {securityGrade && (
+                  <>
+                    <HealthGradeBadge grade={securityGrade} size="sm" />
+                    {displaySections.security?.score != null && (
+                      <span className="text-xs text-muted-foreground tabular-nums">
+                        {displaySections.security.score}/100
+                      </span>
+                    )}
+                  </>
+                )}
                 {isStreaming && (
                   <span className="flex items-center gap-1 shrink-0">
                     {[0, 1, 2].map((i) => (

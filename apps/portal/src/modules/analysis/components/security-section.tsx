@@ -1,7 +1,11 @@
 import { HealthGradeBadge } from '@/common/components/health-grade-badge'
 import { SECTION_ICONS } from '@/common/components/section-icons'
 import { SECTION_META } from '@/common/constants/analysis-sections'
-import type { SecuritySection as SecuritySectionData, SeverityLevel } from '@repo/shared'
+import type {
+  SecurityGrade,
+  SecuritySection as SecuritySectionData,
+  SeverityLevel,
+} from '@repo/shared'
 import { Badge } from '@repo/ui/components/badge'
 import { cn } from '@repo/ui/lib/utils'
 import { SectionCard } from './section-card'
@@ -18,8 +22,34 @@ const SEVERITY_STYLES: Record<SeverityLevel, string> = {
   low: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
 }
 
+const GRADE_THRESHOLDS: Record<SecurityGrade, number> = {
+  A: 90,
+  B: 75,
+  C: 60,
+  D: 40,
+  F: 0,
+}
+
+const NEXT_GRADE: Partial<Record<SecurityGrade, SecurityGrade>> = {
+  F: 'D',
+  D: 'C',
+  C: 'B',
+  B: 'A',
+}
+
+function getPointsToNextGrade(
+  score: number,
+  grade: SecurityGrade,
+): { points: number; next: SecurityGrade } | null {
+  const next = NEXT_GRADE[grade]
+  if (!next) return null
+  return { points: GRADE_THRESHOLDS[next] - score, next }
+}
+
 export function SecuritySection({ data, isStreaming }: SecuritySectionProps) {
   const meta = SECTION_META.security
+  const nextGradeInfo = getPointsToNextGrade(data.score, data.grade)
+
   return (
     <SectionCard
       icon={SECTION_ICONS.security}
@@ -32,8 +62,17 @@ export function SecuritySection({ data, isStreaming }: SecuritySectionProps) {
         <div className="flex items-center gap-4">
           <HealthGradeBadge grade={data.grade} size="lg" />
           <div>
-            <p className="text-sm font-semibold">{data.score}/100</p>
-            <p className="text-xs text-muted-foreground">Security score</p>
+            <p className="text-2xl font-bold tabular-nums">
+              {data.score}
+              <span className="text-sm font-normal text-muted-foreground">/100</span>
+            </p>
+            {nextGradeInfo && nextGradeInfo.points > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                +{nextGradeInfo.points} pts para nota {nextGradeInfo.next}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Security score</p>
+            )}
           </div>
         </div>
 

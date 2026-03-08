@@ -4,6 +4,11 @@ export const SECTION_META: Record<
   AnalysisSectionType,
   { label: string; description: string; icon: string }
 > = {
+  analysis_progress: {
+    label: 'Progress',
+    description: 'What changed since the last analysis',
+    icon: '📈',
+  },
   executive_summary: {
     label: 'Executive Summary',
     description: 'Plain-language overview of the project',
@@ -52,6 +57,7 @@ export const SECTION_META: Record<
 }
 
 export const SECTION_ORDER: AnalysisSectionType[] = [
+  'analysis_progress',
   'executive_summary',
   'tech_stack',
   'architecture',

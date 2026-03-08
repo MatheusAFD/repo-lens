@@ -140,6 +140,7 @@ export const analysis = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    previousAnalysisId: text('previous_analysis_id'),
     status: text('status').notNull().default('running'),
     result: text('result'),
     errorMessage: text('error_message'),

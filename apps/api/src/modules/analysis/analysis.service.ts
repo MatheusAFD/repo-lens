@@ -27,6 +27,8 @@ const DEFAULT_SECTIONS: AnalysisSectionType[] = [
   'fun_facts',
 ]
 
+const PROGRESS_SECTION: AnalysisSectionType = 'analysis_progress'
+
 @Injectable()
 export class AnalysisService {
   private readonly anthropic = new Anthropic({
@@ -51,14 +53,31 @@ export class AnalysisService {
     const [repoError, repo] = await this.reposService.getRepo(repoId, userId)
     if (repoError) throw repoError
 
+    const previousAnalysis = await this.getLatestAnalysis(repoId, userId)
+    const sectionsWithProgress = previousAnalysis
+      ? [...new Set([PROGRESS_SECTION, ...sections])]
+      : sections
+
     const [{ analysisId }] = await db
       .insert(analysis)
-      .values({ repositoryId: repo.id, userId, status: 'running' })
+      .values({
+        repositoryId: repo.id,
+        userId,
+        status: 'running',
+        previousAnalysisId: previousAnalysis?.id ?? null,
+      })
       .returning({ analysisId: analysis.id })
 
     this.subjects.set(analysisId, new Subject<MessageEvent>())
 
-    this.runAnalysis(analysisId, repo, userId, sections, customContext).catch(async (runError) => {
+    this.runAnalysis(
+      analysisId,
+      repo,
+      userId,
+      sectionsWithProgress,
+      customContext,
+      previousAnalysis?.result ?? undefined,
+    ).catch(async (runError) => {
       await db
         .update(analysis)
         .set({
@@ -158,6 +177,7 @@ export class AnalysisService {
     userId: string,
     sections: AnalysisSectionType[] = DEFAULT_SECTIONS,
     customContext?: string,
+    previousAnalysis?: Partial<AnalysisResult>,
   ) {
     this.results.set(analysisId, {})
 
@@ -196,7 +216,7 @@ export class AnalysisService {
       message: 'Analyzing with Claude AI…',
     })
 
-    const systemPrompt = this.promptBuilder.buildSystemPrompt(sections)
+    const systemPrompt = this.promptBuilder.buildSystemPrompt(sections, !!previousAnalysis)
     const userPrompt = this.promptBuilder.buildUserPrompt(
       {
         owner: repo.owner,
@@ -206,6 +226,7 @@ export class AnalysisService {
       },
       files,
       customContext,
+      previousAnalysis,
     )
 
     let buffer = ''

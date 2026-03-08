@@ -36,6 +36,7 @@ export type AnalysisSectionType =
   | 'recommendations'
   | 'code_metrics'
   | 'fun_facts'
+  | 'analysis_progress'
 
 export type SecurityGrade = 'A' | 'B' | 'C' | 'D' | 'F'
 export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low'
@@ -133,6 +134,20 @@ export interface FunFactsSection {
   codeAge?: string
 }
 
+export interface ProgressItem {
+  title: string
+  status: 'fixed' | 'improved' | 'new_issue'
+  description: string
+}
+
+export interface AnalysisProgressSection {
+  scoreChange: number
+  gradeChange: string | null
+  fixedIssues: ProgressItem[]
+  newIssues: ProgressItem[]
+  summary: string
+}
+
 export interface QuestionAnswer {
   id: string
   question: string
@@ -159,6 +174,7 @@ export interface AnalysisResult {
   recommendations?: RecommendationsSection
   code_metrics?: CodeMetricsSection
   fun_facts?: FunFactsSection
+  analysis_progress?: AnalysisProgressSection
 }
 
 export type SseEvent =
