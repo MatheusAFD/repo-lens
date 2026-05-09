@@ -82,3 +82,17 @@ export {
 export { Skeleton } from './components/skeleton'
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './components/tabs'
 export { Toaster } from './components/sonner'
+export { Textarea } from './components/textarea'
+export { ScrollArea, ScrollBar } from './components/scroll-area'
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from './components/sheet'
+export { Markdown } from './components/markdown'
+export { CodeBlock, InlineCode } from './components/code-block'
