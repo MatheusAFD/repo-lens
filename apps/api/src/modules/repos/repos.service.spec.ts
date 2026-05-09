@@ -15,8 +15,12 @@ jest.mock('../../config/database', () => ({
   },
 }))
 
-import { ReposService } from './repos.service'
 import { db } from '../../config/database'
+import { ReposService } from './repos.service'
+import { GetRepoUseCase } from './use-cases/get-repo.use-case'
+import { ListAnalysesUseCase } from './use-cases/list-analyses.use-case'
+import { ListReposUseCase } from './use-cases/list-repos.use-case'
+import { UpsertRepoUseCase } from './use-cases/upsert-repo.use-case'
 
 const mockDb = db as jest.Mocked<typeof db>
 
@@ -26,7 +30,13 @@ describe('ReposService', () => {
   beforeEach(async () => {
     jest.clearAllMocks()
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ReposService],
+      providers: [
+        ReposService,
+        ListReposUseCase,
+        UpsertRepoUseCase,
+        GetRepoUseCase,
+        ListAnalysesUseCase,
+      ],
     }).compile()
     service = module.get<ReposService>(ReposService)
   })

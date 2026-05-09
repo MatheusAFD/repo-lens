@@ -13,8 +13,12 @@ jest.mock('../../config/database', () => ({
   },
 }))
 
-import { GithubService } from './github.service'
 import { db } from '../../config/database'
+import { GithubService } from './github.service'
+import { GetFileContentUseCase } from './use-cases/get-file-content.use-case'
+import { GetRepoTreeUseCase } from './use-cases/get-repo-tree.use-case'
+import { GetTokenUseCase } from './use-cases/get-token.use-case'
+import { ListUserReposUseCase } from './use-cases/list-user-repos.use-case'
 
 const mockDb = db as jest.Mocked<typeof db>
 
@@ -24,7 +28,13 @@ describe('GithubService', () => {
   beforeEach(async () => {
     jest.clearAllMocks()
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GithubService],
+      providers: [
+        GithubService,
+        GetTokenUseCase,
+        ListUserReposUseCase,
+        GetRepoTreeUseCase,
+        GetFileContentUseCase,
+      ],
     }).compile()
     service = module.get<GithubService>(GithubService)
   })

@@ -1,41 +1,19 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
-import { desc, eq, gt } from 'drizzle-orm'
-import { db } from '../../config/database'
-import { session as sessionTable, user as userTable } from '../../config/database/schema'
+import { Injectable } from '@nestjs/common'
+import { ListSessionsUseCase } from './use-cases/list-sessions.use-case'
+import { RevokeSessionUseCase } from './use-cases/revoke-session.use-case'
 
 @Injectable()
 export class SessionsService {
-  async listSessions() {
-    const sessions = await db
-      .select()
-      .from(sessionTable)
-      .where(gt(sessionTable.expiresAt, new Date()))
-      .orderBy(desc(sessionTable.createdAt))
+  constructor(
+    private readonly listSessionsUseCase: ListSessionsUseCase,
+    private readonly revokeSessionUseCase: RevokeSessionUseCase,
+  ) {}
 
-    return sessions
+  listSessions() {
+    return this.listSessionsUseCase.execute()
   }
 
-  async revokeSession(token: string) {
-    const [target] = await db
-      .select({ userId: sessionTable.userId })
-      .from(sessionTable)
-      .where(eq(sessionTable.token, token))
-
-    if (!target) {
-      throw new NotFoundException('Session not found')
-    }
-
-    const [targetUser] = await db
-      .select({ role: userTable.role })
-      .from(userTable)
-      .where(eq(userTable.id, target.userId))
-
-    if (targetUser?.role === 'backoffice') {
-      throw new ForbiddenException('Cannot revoke session of another admin')
-    }
-
-    await db.delete(sessionTable).where(eq(sessionTable.token, token))
-
-    return { success: true }
+  revokeSession(token: string) {
+    return this.revokeSessionUseCase.execute({ token })
   }
 }

@@ -20,12 +20,20 @@ jest.mock('@anthropic-ai/sdk', () => {
   return { default: MockAnthropic, __esModule: true }
 })
 
-import { AnalysisService } from './analysis.service'
+import { db } from '../../config/database'
 import { GithubService } from '../github/github.service'
 import { ReposService } from '../repos/repos.service'
+import { AnalysisService } from './analysis.service'
 import { ContextBuilderService } from './context-builder.service'
 import { PromptBuilderService } from './prompt-builder.service'
-import { db } from '../../config/database'
+import { AnalysisStreamPool } from './use-cases/analysis-stream-pool'
+import { AskQuestionUseCase } from './use-cases/ask-question.use-case'
+import { GetAnalysisUseCase } from './use-cases/get-analysis.use-case'
+import { GetLatestAnalysisUseCase } from './use-cases/get-latest-analysis.use-case'
+import { GetQuestionsUseCase } from './use-cases/get-questions.use-case'
+import { RunAnalysisUseCase } from './use-cases/run-analysis.use-case'
+import { StartAnalysisUseCase } from './use-cases/start-analysis.use-case'
+import { StreamAnalysisUseCase } from './use-cases/stream-analysis.use-case'
 
 const mockDb = db as jest.Mocked<typeof db>
 
@@ -58,6 +66,14 @@ describe('AnalysisService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnalysisService,
+        AnalysisStreamPool,
+        StartAnalysisUseCase,
+        StreamAnalysisUseCase,
+        GetAnalysisUseCase,
+        GetLatestAnalysisUseCase,
+        GetQuestionsUseCase,
+        AskQuestionUseCase,
+        RunAnalysisUseCase,
         { provide: GithubService, useValue: mockGithubService },
         { provide: ReposService, useValue: mockReposService },
         { provide: ContextBuilderService, useValue: mockContextBuilder },
