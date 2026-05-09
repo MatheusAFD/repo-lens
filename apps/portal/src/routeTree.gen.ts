@@ -15,7 +15,9 @@ import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedAnalyzeRepoIdRouteImport } from './routes/_authed/analyze/$repoId'
+import { Route as AuthedReposRepoIdChatIndexRouteImport } from './routes/_authed/repos/$repoId/chat/index'
 import { Route as AuthedReposRepoIdAnalysesIndexRouteImport } from './routes/_authed/repos/$repoId/analyses/index'
+import { Route as AuthedReposRepoIdChatChatIdRouteImport } from './routes/_authed/repos/$repoId/chat/$chatId'
 import { Route as AuthedReposRepoIdAnalysesAnalysisIdRouteImport } from './routes/_authed/repos/$repoId/analyses/$analysisId'
 
 const AuthedRoute = AuthedRouteImport.update({
@@ -47,10 +49,22 @@ const AuthedAnalyzeRepoIdRoute = AuthedAnalyzeRepoIdRouteImport.update({
   path: '/analyze/$repoId',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedReposRepoIdChatIndexRoute =
+  AuthedReposRepoIdChatIndexRouteImport.update({
+    id: '/repos/$repoId/chat/',
+    path: '/repos/$repoId/chat/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 const AuthedReposRepoIdAnalysesIndexRoute =
   AuthedReposRepoIdAnalysesIndexRouteImport.update({
     id: '/repos/$repoId/analyses/',
     path: '/repos/$repoId/analyses/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedReposRepoIdChatChatIdRoute =
+  AuthedReposRepoIdChatChatIdRouteImport.update({
+    id: '/repos/$repoId/chat/$chatId',
+    path: '/repos/$repoId/chat/$chatId',
     getParentRoute: () => AuthedRoute,
   } as any)
 const AuthedReposRepoIdAnalysesAnalysisIdRoute =
@@ -67,7 +81,9 @@ export interface FileRoutesByFullPath {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/analyze/$repoId': typeof AuthedAnalyzeRepoIdRoute
   '/repos/$repoId/analyses/$analysisId': typeof AuthedReposRepoIdAnalysesAnalysisIdRoute
+  '/repos/$repoId/chat/$chatId': typeof AuthedReposRepoIdChatChatIdRoute
   '/repos/$repoId/analyses/': typeof AuthedReposRepoIdAnalysesIndexRoute
+  '/repos/$repoId/chat/': typeof AuthedReposRepoIdChatIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,7 +92,9 @@ export interface FileRoutesByTo {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/analyze/$repoId': typeof AuthedAnalyzeRepoIdRoute
   '/repos/$repoId/analyses/$analysisId': typeof AuthedReposRepoIdAnalysesAnalysisIdRoute
+  '/repos/$repoId/chat/$chatId': typeof AuthedReposRepoIdChatChatIdRoute
   '/repos/$repoId/analyses': typeof AuthedReposRepoIdAnalysesIndexRoute
+  '/repos/$repoId/chat': typeof AuthedReposRepoIdChatIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,7 +105,9 @@ export interface FileRoutesById {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/_authed/analyze/$repoId': typeof AuthedAnalyzeRepoIdRoute
   '/_authed/repos/$repoId/analyses/$analysisId': typeof AuthedReposRepoIdAnalysesAnalysisIdRoute
+  '/_authed/repos/$repoId/chat/$chatId': typeof AuthedReposRepoIdChatChatIdRoute
   '/_authed/repos/$repoId/analyses/': typeof AuthedReposRepoIdAnalysesIndexRoute
+  '/_authed/repos/$repoId/chat/': typeof AuthedReposRepoIdChatIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -98,7 +118,9 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/analyze/$repoId'
     | '/repos/$repoId/analyses/$analysisId'
+    | '/repos/$repoId/chat/$chatId'
     | '/repos/$repoId/analyses/'
+    | '/repos/$repoId/chat/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -107,7 +129,9 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/analyze/$repoId'
     | '/repos/$repoId/analyses/$analysisId'
+    | '/repos/$repoId/chat/$chatId'
     | '/repos/$repoId/analyses'
+    | '/repos/$repoId/chat'
   id:
     | '__root__'
     | '/'
@@ -117,7 +141,9 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/_authed/analyze/$repoId'
     | '/_authed/repos/$repoId/analyses/$analysisId'
+    | '/_authed/repos/$repoId/chat/$chatId'
     | '/_authed/repos/$repoId/analyses/'
+    | '/_authed/repos/$repoId/chat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,11 +197,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAnalyzeRepoIdRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/repos/$repoId/chat/': {
+      id: '/_authed/repos/$repoId/chat/'
+      path: '/repos/$repoId/chat'
+      fullPath: '/repos/$repoId/chat/'
+      preLoaderRoute: typeof AuthedReposRepoIdChatIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/repos/$repoId/analyses/': {
       id: '/_authed/repos/$repoId/analyses/'
       path: '/repos/$repoId/analyses'
       fullPath: '/repos/$repoId/analyses/'
       preLoaderRoute: typeof AuthedReposRepoIdAnalysesIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/repos/$repoId/chat/$chatId': {
+      id: '/_authed/repos/$repoId/chat/$chatId'
+      path: '/repos/$repoId/chat/$chatId'
+      fullPath: '/repos/$repoId/chat/$chatId'
+      preLoaderRoute: typeof AuthedReposRepoIdChatChatIdRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/repos/$repoId/analyses/$analysisId': {
@@ -192,7 +232,9 @@ interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedAnalyzeRepoIdRoute: typeof AuthedAnalyzeRepoIdRoute
   AuthedReposRepoIdAnalysesAnalysisIdRoute: typeof AuthedReposRepoIdAnalysesAnalysisIdRoute
+  AuthedReposRepoIdChatChatIdRoute: typeof AuthedReposRepoIdChatChatIdRoute
   AuthedReposRepoIdAnalysesIndexRoute: typeof AuthedReposRepoIdAnalysesIndexRoute
+  AuthedReposRepoIdChatIndexRoute: typeof AuthedReposRepoIdChatIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
@@ -200,7 +242,9 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAnalyzeRepoIdRoute: AuthedAnalyzeRepoIdRoute,
   AuthedReposRepoIdAnalysesAnalysisIdRoute:
     AuthedReposRepoIdAnalysesAnalysisIdRoute,
+  AuthedReposRepoIdChatChatIdRoute: AuthedReposRepoIdChatChatIdRoute,
   AuthedReposRepoIdAnalysesIndexRoute: AuthedReposRepoIdAnalysesIndexRoute,
+  AuthedReposRepoIdChatIndexRoute: AuthedReposRepoIdChatIndexRoute,
 }
 
 const AuthedRouteWithChildren =

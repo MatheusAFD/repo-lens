@@ -101,14 +101,22 @@ export function AnalysisPage({ repo, initialAnalysisId }: AnalysisPageProps) {
             </Link>
             <span>/</span>
             <Link
-              to={'/repos/$repoId/analyses' as never}
+              to={'/repos/$repoId/chat' as never}
               params={{ repoId: repo.id } as never}
               className="hover:text-foreground transition-colors cursor-pointer"
             >
               {repo.fullName}
             </Link>
             <span>/</span>
-            <span>Analysis</span>
+            <Link
+              to={'/repos/$repoId/analyses' as never}
+              params={{ repoId: repo.id } as never}
+              className="hover:text-foreground transition-colors cursor-pointer"
+            >
+              Analyses
+            </Link>
+            <span>/</span>
+            <span>Detail</span>
           </div>
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
