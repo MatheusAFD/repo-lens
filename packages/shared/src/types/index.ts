@@ -182,3 +182,74 @@ export type SseEvent =
   | { type: 'progress'; message: string }
   | { type: 'done'; analysisId: string }
   | { type: 'error'; message: string }
+
+export type ChatMessageRole = 'user' | 'assistant' | 'system'
+export type ChatMessageStatus = 'streaming' | 'complete' | 'failed'
+
+export interface Chat {
+  id: string
+  repositoryId: string
+  userId: string
+  title: string
+  lastMessageAt: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ChatMessage {
+  id: string
+  chatId: string
+  role: ChatMessageRole
+  content: string
+  status: ChatMessageStatus
+  errorMessage?: string | null
+  inputTokens?: number | null
+  outputTokens?: number | null
+  createdAt: string
+}
+
+export interface CreateChatRequest {
+  title?: string
+}
+
+export interface RenameChatRequest {
+  title: string
+}
+
+export interface SendMessageRequest {
+  content: string
+}
+
+export interface CodeArea {
+  id: string
+  label: string
+  description?: string
+}
+
+export type SuggestionAxis = 'area' | 'lens' | 'combined'
+
+export interface PromptSuggestion {
+  id: string
+  label: string
+  prompt: string
+  axis: SuggestionAxis
+  areaId?: string
+  lensId?: AnalysisSectionType
+}
+
+export interface SuggestionLens {
+  id: AnalysisSectionType
+  label: string
+}
+
+export interface PromptSuggestionsResponse {
+  areas: CodeArea[]
+  lenses: SuggestionLens[]
+  suggestions: PromptSuggestion[]
+}
+
+export type ChatSseEvent =
+  | { type: 'message_start'; messageId: string }
+  | { type: 'delta'; text: string }
+  | { type: 'done'; messageId: string; inputTokens: number; outputTokens: number }
+  | { type: 'error'; message: string }
