@@ -43,6 +43,13 @@
       "when": 1773000021821,
       "tag": "0005_swift_sleepwalker",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1778337766078,
+      "tag": "0006_chat_persistence",
+      "breakpoints": true
     }
   ]
 }

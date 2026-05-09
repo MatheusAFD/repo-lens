@@ -1,6 +1,6 @@
-import { relations } from 'drizzle-orm'
-import { pgTable, text, timestamp, boolean, index, integer } from 'drizzle-orm/pg-core'
 import { randomUUID } from 'node:crypto'
+import { relations } from 'drizzle-orm'
+import { boolean, index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -116,6 +116,8 @@ export const repository = pgTable(
     language: text('language'),
     isPrivate: boolean('is_private').default(false).notNull(),
     htmlUrl: text('html_url').notNull(),
+    codeAreas: text('code_areas'),
+    codeAreasComputedAt: timestamp('code_areas_computed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
       .defaultNow()
@@ -158,6 +160,7 @@ export const analysis = pgTable(
 export const repositoryRelations = relations(repository, ({ one, many }) => ({
   user: one(user, { fields: [repository.userId], references: [user.id] }),
   analyses: many(analysis),
+  chats: many(chat),
 }))
 
 export const analysisRelations = relations(analysis, ({ one, many }) => ({
@@ -188,4 +191,65 @@ export const analysisQuestion = pgTable(
 export const analysisQuestionRelations = relations(analysisQuestion, ({ one }) => ({
   analysis: one(analysis, { fields: [analysisQuestion.analysisId], references: [analysis.id] }),
   user: one(user, { fields: [analysisQuestion.userId], references: [user.id] }),
+}))
+
+export const chat = pgTable(
+  'chat',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    repositoryId: text('repository_id')
+      .notNull()
+      .references(() => repository.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    title: text('title').notNull().default('New conversation'),
+    bootstrapContext: text('bootstrap_context'),
+    lastMessageAt: timestamp('last_message_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index('chat_repositoryId_idx').on(table.repositoryId),
+    index('chat_userId_idx').on(table.userId),
+    index('chat_lastMessageAt_idx').on(table.lastMessageAt),
+  ],
+)
+
+export const chatMessage = pgTable(
+  'chat_message',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    chatId: text('chat_id')
+      .notNull()
+      .references(() => chat.id, { onDelete: 'cascade' }),
+    role: text('role').notNull(),
+    content: text('content').notNull(),
+    status: text('status').notNull().default('complete'),
+    errorMessage: text('error_message'),
+    inputTokens: integer('input_tokens'),
+    outputTokens: integer('output_tokens'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('chat_message_chatId_idx').on(table.chatId),
+    index('chat_message_createdAt_idx').on(table.createdAt),
+  ],
+)
+
+export const chatRelations = relations(chat, ({ one, many }) => ({
+  repository: one(repository, { fields: [chat.repositoryId], references: [repository.id] }),
+  user: one(user, { fields: [chat.userId], references: [user.id] }),
+  messages: many(chatMessage),
+}))
+
+export const chatMessageRelations = relations(chatMessage, ({ one }) => ({
+  chat: one(chat, { fields: [chatMessage.chatId], references: [chat.id] }),
 }))
