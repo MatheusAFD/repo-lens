@@ -232,10 +232,45 @@ src/modules/{feature}/
 
 The API has the following modules in `apps/api/src/modules/`:
 
-- `analysis/` — AI analysis pipeline (Anthropic SDK, SSE streaming)
+- `chat/` — Conversational AI over a repository (Anthropic streaming SSE, prompt suggestions, scope mapper)
+- `analysis/` — Structured AI analysis pipeline (Anthropic SDK, SSE streaming, section parser)
 - `github/` — GitHub OAuth and repository access
 - `repos/` — Repository management and analysis orchestration
 - `sessions/` — User session management
+
+### Module Layout (use-case pattern)
+
+Each module is split into thin facade services and single-responsibility use-cases:
+
+```
+modules/{module}/
+├── {module}.controller.ts     # HTTP layer
+├── {module}.module.ts         # NestJS module wiring
+├── {module}.service.ts        # Facade — delegates to use-cases
+├── use-cases/
+│   ├── {verb-noun}.use-case.ts  # One per public method
+│   └── ...
+├── dto/                        # Request DTOs
+└── (optional builders / mappers)
+```
+
+Conventions:
+
+- Use-case file name: `{verb}-{noun}.use-case.ts` (e.g. `create-chat.use-case.ts`).
+- Class name: `{Verb}{Noun}UseCase`, single public method `execute(params)` taking a plain object.
+- Returns `Result<T>` (Go-tuple) where the service contract uses Result, throws `NotFoundException`/`ForbiddenException` where the controller/spec relies on try-throw.
+- `@Injectable()` on every use-case, deps injected via constructor.
+- Service stays as a facade so controllers and cross-module callers (e.g. `ChatService` consuming `AnalysisService.getLatestAnalysis`) keep their existing signatures.
+
+### Common helpers — `apps/api/src/common/`
+
+Shared utilities reused across modules:
+
+- `streaming/sse-subject-pool.ts` — generic `Map<string, Subject<MessageEvent>>` with `create/emit/complete/get`. Used by chat and analysis streaming pipelines.
+- `streaming/sse-emitter.ts` — `toMessageEvent(event)` helper.
+- `parsing/section-parser.ts` — pure `parseSections(buffer)` for `##BEGIN/END_SECTION##` markers used by structured analysis.
+- `mappers/chat.mapper.ts` and `mappers/analysis.mapper.ts` — row-to-DTO functions.
+- `guards/ownership.ts` — `assertOwner({ row, userId, ... })` guard, throws on missing/foreign rows.
 
 ### Create a new module
 ```bash

@@ -1,6 +1,7 @@
-# CLAUDE.md — apps/repo-lens
+# CLAUDE.md — apps/portal
 
 > End-user portal. TanStack Start v1, React 19, port 3000.
+> Chat-first surface for any GitHub repository, with structured analysis as a secondary view.
 
 ---
 
@@ -8,27 +9,53 @@
 
 ```
 src/
-├── modules/          # Feature modules (auth, etc.)
-│   └── {feature}/
-│       ├── components/   # Feature components ({name}.tsx)
-│       ├── hooks/        # Feature hooks (use-{name}-actions.ts)
-│       ├── schemas/      # Zod schemas ({feature}.schema.ts)
-│       └── server/       # Server functions ({action}.fn.ts)
+├── modules/          # Feature modules
+│   ├── auth/             # Sign-in / sign-up flows
+│   ├── chat/             # Conversational AI per repository (default landing)
+│   ├── analysis/         # Structured analysis report (secondary)
+│   └── repos/            # Repository list + add-repo dialog
 ├── routes/
 │   ├── __root.tsx
 │   ├── auth/
-│   │   ├── sign-in.tsx         # /auth/sign-in (redirects if authenticated)
-│   │   └── sign-up.tsx         # /auth/sign-up (redirects if authenticated)
-│   ├── _authed.tsx             # Protected layout (authMiddleware)
+│   │   ├── sign-in.tsx                   # /auth/sign-in
+│   │   └── sign-up.tsx                   # /auth/sign-up
+│   ├── _authed.tsx                       # Protected layout (authMiddleware)
 │   └── _authed/
-│       └── dashboard.tsx       # /dashboard
+│       ├── dashboard.tsx                 # /dashboard
+│       ├── analyze/$repoId.tsx           # Legacy direct-analysis URL
+│       └── repos/$repoId/
+│           ├── chat/
+│           │   ├── index.tsx             # /repos/$repoId/chat (default)
+│           │   └── $chatId.tsx           # /repos/$repoId/chat/$chatId
+│           └── analyses/
+│               ├── index.tsx             # /repos/$repoId/analyses
+│               └── $analysisId.tsx       # /repos/$repoId/analyses/$id
+├── services/
+│   └── http/
+│       ├── chat/                         # Chat service + SSE stream helper
+│       ├── analysis/
+│       ├── repos/
+│       └── github/
 ├── middleware/
-│   └── auth.ts           # createMiddleware().server() — SSR session guard
+│   └── auth.ts                           # SSR auth middleware
 ├── lib/
-│   └── auth-client.ts    # Better Auth client + inferAdditionalFields + adminClient
-└── components/
-    └── Header.tsx
+│   └── auth-client.ts                    # Better Auth client
+└── common/
+    └── components/                       # Shared layout primitives
 ```
+
+### Per-module layout
+
+```
+src/modules/{feature}/
+├── components/      # Feature components ({name}.tsx or {name}/index.tsx for folders)
+├── hooks/           # Feature hooks (use-{name}.ts)
+├── schemas/         # Zod schemas ({feature}.schema.ts)
+├── server/          # TanStack Start server functions ({action}.fn.ts)
+└── domain/          # Domain types ({feature}.domain.ts)
+```
+
+Components that nest sub-components or helpers live as a folder with `index.tsx` plus auxiliary files (e.g. `chat-sidebar/{index.tsx,sidebar-skeleton.tsx}`).
 
 ---
 

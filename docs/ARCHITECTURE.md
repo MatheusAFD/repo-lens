@@ -2,17 +2,17 @@
 
 ## Architecture Overview
 
-This project follows a **modular monolith architecture** with clear separation of concerns across a monorepo with two apps and shared packages.
+RepoLens is a **chat-first AI tool for any GitHub repository**, backed by a modular monolith. The default landing surface for any repo is a conversation grounded in selected source files plus the latest structured analysis. The structured analysis view (security, dependencies, architecture, etc) remains available as a secondary path.
 
 ```
-repo-ai-analyzer/
+repo-lens/
 ├── apps/
-│   ├── portal/          # TanStack Start — end-user portal (port 3000)
-│   └── api/             # NestJS — REST API (port 4000)
+│   ├── portal/          # TanStack Start — chat-first portal (port 3000)
+│   └── api/             # NestJS — REST + SSE API (port 4000)
 ├── packages/
-│   ├── ui/              # Shared components (Shadcn + Radix)
+│   ├── ui/              # Shared components (Shadcn + Radix + Markdown)
 │   ├── auth/            # Shared Better Auth configuration
-│   ├── shared/          # Types, constants and utilities
+│   ├── shared/          # Types, constants and utilities (incl. chat domain)
 │   └── typescript-config/
 └── docs/
 ```
@@ -21,9 +21,18 @@ repo-ai-analyzer/
 
 1. **Feature Modules**: Each feature is self-contained in `modules/` with its own components, schemas, hooks and server functions
 2. **Service Layer**: HTTP communication abstracted into service classes with dependency injection
-3. **Go-style Error Handling**: `[Error | null, Data | null]` tuples throughout the service layer
-4. **Type Safety**: Strict TypeScript with runtime validation via Zod
-5. **Server Functions**: TanStack Start server functions for SSR data fetching
+3. **Use-cases (backend)**: Backend services are thin facades; each public method is implemented by a dedicated `*UseCase` class under `modules/{x}/use-cases/`. Cross-cutting helpers live in `apps/api/src/common/` (SSE pool, section parser, mappers, ownership guard)
+4. **Go-style Error Handling**: `[Error | null, Data | null]` tuples throughout the service layer
+5. **Type Safety**: Strict TypeScript with runtime validation via Zod
+6. **Server Functions**: TanStack Start server functions for SSR data fetching
+7. **SSE Streaming**: Chat replies and analysis sections stream via NestJS `@Sse()` Observables backed by RxJS Subjects pooled in `SseSubjectPool<TEvent>`
+
+## Chat module (primary feature)
+
+- **Entry point**: `/repos/$repoId/chat` (defaults to last conversation or empty state with prompt suggestions)
+- **Persistence**: `chat` and `chat_message` tables (cascade-deleted with the repo). Each chat caches a `bootstrapContext` after the first message — a slice of the most relevant source files plus the latest analysis JSON — so subsequent turns avoid re-fetching the repo
+- **Prompt suggestions**: Cross-product of detected **code areas** (modules) × analytical **lenses** (executive_summary, security, architecture, etc). Areas are detected by `ScopeMapperService` using a Claude Haiku call against the repo tree, cached on `repository.codeAreas` for 7 days
+- **Streaming pipeline**: `SendMessageUseCase` writes user + assistant placeholder rows, builds the system prompt + history window, calls `anthropic.messages.stream`, and emits `ChatSseEvent` deltas via `SseSubjectPool`. Errors mark the assistant row `failed`
 
 ## Module Structure (Portal)
 

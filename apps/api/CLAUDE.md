@@ -9,19 +9,52 @@
 ```
 src/
 ├── auth/
-│   ├── auth.ts           # Better Auth central config (betterAuth())
-│   └── permissions.ts    # RBAC — accessControl, roles (portal, backoffice)
+│   ├── auth.ts                    # Better Auth central config (betterAuth())
+│   └── permissions.ts             # RBAC — accessControl, roles (portal, backoffice)
+├── common/
+│   ├── streaming/
+│   │   ├── sse-subject-pool.ts    # Generic Map<string, Subject<MessageEvent>>
+│   │   └── sse-emitter.ts         # toMessageEvent helper
+│   ├── parsing/
+│   │   └── section-parser.ts      # parseSections for ##BEGIN/END_SECTION##
+│   ├── mappers/
+│   │   ├── chat.mapper.ts         # Row → Chat / ChatMessage
+│   │   └── analysis.mapper.ts     # Row → AnalysisDetail
+│   └── guards/
+│       └── ownership.ts           # assertOwner({ row, userId, ... })
 ├── modules/
-│   └── sessions/
-│       ├── sessions.module.ts      # NestJS module
-│       ├── sessions.controller.ts  # @Roles(['backoffice']) protected routes
-│       └── sessions.service.ts     # Better Auth API interaction
+│   ├── chat/                      # Chat with a repository (streaming)
+│   ├── analysis/                  # Structured analysis pipeline
+│   ├── github/                    # GitHub API access
+│   ├── repos/                     # Repository CRUD
+│   └── sessions/                  # Better Auth session admin
 ├── config/
 │   └── database/
-│       ├── index.ts   # Drizzle + postgres connection (with DATABASE_URL validation)
-│       └── schema.ts  # Drizzle schema (Better Auth tables + extensions)
-└── main.ts           # NestJS bootstrap
+│       ├── index.ts               # Drizzle + postgres connection (DATABASE_URL validation)
+│       └── schema.ts              # Drizzle schema (auth + analysis + chat tables)
+└── main.ts                        # NestJS bootstrap
 ```
+
+### Per-module layout (use-case pattern)
+
+```
+modules/{module}/
+├── {module}.controller.ts     # HTTP / SSE endpoints
+├── {module}.module.ts         # NestJS providers wiring
+├── {module}.service.ts        # Facade — delegates to use-cases
+├── use-cases/
+│   ├── {verb-noun}.use-case.ts  # One @Injectable() class per public method
+│   └── ...
+├── dto/                        # Class DTOs for controller input
+└── (optional builders / mappers / fixtures)
+```
+
+Use-case rules:
+
+- File: `kebab-case.use-case.ts`. Class: `PascalCaseUseCase` with single public `execute(params)`.
+- Returns `Result<T>` (`[Error|null, Data|null]`) when called via a Result-using facade. Throws `NotFoundException`/`ForbiddenException` when the controller does try-throw (e.g. `sendMessage`, `getAnalysis`).
+- All deps injected via constructor. No singletons inside use-cases.
+- Streaming use-cases reuse `SseSubjectPool` from `common/streaming/`.
 
 ---
 

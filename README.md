@@ -1,26 +1,27 @@
 # RepoLens
 
-An AI-powered repository analyzer that gives you a comprehensive health report of any codebase — powered by the Claude API.
+Conversational AI for any GitHub repository — chat-first analysis grounded in your codebase, powered by the Claude API.
 
-Paste a GitHub repo URL or connect your GitHub account to select from your repositories. RepoLens analyzes the code, dependencies, architecture, and security posture, then streams a structured report in real time — designed to be readable by both developers and non-technical users.
+Connect your GitHub account, pick a repository, and start a conversation. RepoLens streams Claude's answers in markdown, citing files from the repo, and offers prompt suggestions built from detected code areas crossed with analytical lenses (security, architecture, dependencies, etc). A structured technical analysis is still available as a secondary view for the moments you want a full report.
 
-## What it analyzes
+## Features
 
-- **Executive Summary** — plain-language overview of what the project does
-- **Tech Stack** — languages, frameworks, databases, cloud, and testing tools detected
-- **Architecture** — patterns, key observations, structural notes
-- **Security** — OWASP Top 10 findings, overall grade (A–F), and positives
-- **Dependencies** — health status by ecosystem, vulnerable/outdated packages highlighted
-- **Update Plan** — critical, major, and minor updates grouped by priority with gains explained
-- **Recommendations** — top 7 next actions ordered by impact
+- **Chat with a repository** — multi-turn conversations persisted per repo, with sidebar history, rename and delete, streaming markdown replies, code blocks with copy, and abortable responses
+- **Prompt suggestions** — auto-detected code areas (modules) × analytical lenses (executive summary, tech stack, architecture, security, dependencies, update plan, recommendations, code metrics, fun facts) and combined cross-products
+- **Technical analysis (secondary)** — the original structured report:
+  - Executive Summary, Tech Stack, Architecture
+  - Security findings (OWASP Top 10) with grade A–F
+  - Dependencies health by ecosystem
+  - Update Plan (critical, major, minor)
+  - Top recommendations ordered by impact
 
 ## Stack
 
 | App / Package | Tech |
 |---|---|
-| **RepoLens** (`apps/repo-lens`) | TanStack Start, React 19, TanStack Query |
-| **API** (`apps/api`) | NestJS 11, Drizzle ORM, PostgreSQL |
-| **UI** (`packages/ui`) | Shadcn/UI + Radix UI, Tailwind CSS v4 |
+| **Portal** (`apps/portal`) | TanStack Start, React 19, TanStack Query |
+| **API** (`apps/api`) | NestJS 11, Drizzle ORM, PostgreSQL, Anthropic SDK |
+| **UI** (`packages/ui`) | Shadcn/UI + Radix UI, Tailwind CSS v4, react-markdown |
 | **Auth** (`packages/auth`) | Better Auth (GitHub OAuth) |
 | **Shared** (`packages/shared`) | TypeScript — types & utilities |
 
@@ -37,11 +38,11 @@ cd apps/api && docker-compose up -d && cd ../..
 
 # 3. Set up environment variables
 cp apps/api/.env.example apps/api/.env
-cp apps/repo-lens/.env.example apps/repo-lens/.env
+cp apps/portal/.env.example apps/portal/.env
 # Fill in: ANTHROPIC_API_KEY, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET
 
 # 4. Run database migrations
-pnpm --filter @repo/api db:migrate
+cd apps/api && npx drizzle-kit migrate && cd ../..
 
 # 5. Start all apps in dev mode
 pnpm dev
@@ -49,7 +50,7 @@ pnpm dev
 
 | Service | URL |
 |---|---|
-| RepoLens | http://localhost:3000 |
+| Portal | http://localhost:3000 |
 | API | http://localhost:4000 |
 
 ## Environment Variables
@@ -58,7 +59,10 @@ pnpm dev
 
 ```env
 PORT=4000
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mono_repo_auth
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=repo_lens
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/repo_lens
 BETTER_AUTH_SECRET=your-super-secret-key-change-in-production-min-32-chars
 BETTER_AUTH_URL=http://localhost:4000
 ALLOWED_ORIGINS=http://localhost:3000
@@ -66,13 +70,16 @@ ALLOWED_ORIGINS=http://localhost:3000
 # AI Analysis
 ANTHROPIC_API_KEY=
 
+# Optional: skip real Anthropic calls in dev
+# ANTHROPIC_MOCK=true
+
 # GitHub OAuth (create at github.com/settings/applications/new)
 # Callback URL: http://localhost:4000/api/auth/callback/github
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 ```
 
-### `apps/repo-lens/.env`
+### `apps/portal/.env`
 
 ```env
 VITE_API_URL=http://localhost:4000
@@ -89,20 +96,24 @@ VITE_API_URL=http://localhost:4000
 
 - Your `ANTHROPIC_API_KEY` stays on the server — never exposed to the browser
 - GitHub OAuth tokens are encrypted by Better Auth — never stored in plain text
-- No sensitive credentials are persisted in the database
+- Chat conversations and bootstrap context are scoped to the repository owner and cascade-deleted with the repo
 - This app is designed to run **locally only**
 
 ## Project Structure
 
 ```
 ├── apps/
-│   ├── portal/            # RepoLens UI (port 3000)
+│   ├── portal/            # Chat-first portal UI (port 3000)
 │   └── api/               # REST API + auth server (port 4000)
 ├── packages/
 │   ├── ui/                # Shared component library
 │   ├── auth/              # Better Auth client config
 │   ├── shared/            # Shared types & utilities
 │   └── typescript-config/ # Base tsconfig presets
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── CODING-STANDARDS.md
+│   └── TESTING.md
 ├── turbo.json
 ├── biome.json
 └── pnpm-workspace.yaml
@@ -124,6 +135,6 @@ Managed by **Husky**:
 
 | Hook | What it does |
 |---|---|
-| `pre-commit` | Auto-fixes formatting and lint issues, then re-stages files |
+| `pre-commit` | Auto-fixes formatting and lint issues on staged files only, then re-stages those paths |
 | `commit-msg` | Enforces [Conventional Commits](https://www.conventionalcommits.org/) |
 | `pre-push` | Runs full build — blocks push on failure |
